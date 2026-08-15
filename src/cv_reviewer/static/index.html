@@ -3,157 +3,325 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Technical Competency Review</title>
+  <title>CV competency and position evidence</title>
   <style>
     :root {
-      --bg: #0f1419;
-      --panel: #1a2330;
-      --ink: #e8eef5;
-      --muted: #9aa8b8;
-      --accent: #7dd3c7;
-      --warn: #f0c36d;
-      --line: #2a3848;
+      --bg: #f4f1ea;
+      --panel: #fffdf8;
+      --ink: #1d2430;
+      --muted: #5c6777;
+      --accent: #0f6e62;
+      --warn: #7a4b00;
+      --line: #d9d1c3;
+      --demo: #e7f3f0;
+      --mention: #8a5a12;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      font-family: "Source Sans 3", "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--ink);
-      line-height: 1.5;
+      line-height: 1.45;
     }
-    header, main { max-width: 960px; margin: 0 auto; padding: 24px; }
-    h1 { font-size: 1.6rem; margin: 0 0 8px; }
+    header, main { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    h1 { font-size: 1.55rem; margin: 0 0 6px; }
+    h2 { font-size: 1.15rem; margin: 0 0 10px; }
     .banner {
-      background: #243044;
-      border: 1px solid var(--line);
-      padding: 12px 14px;
-      border-radius: 10px;
+      background: #fff6e8;
+      border: 1px solid #e6d3ae;
+      padding: 10px 12px;
+      border-radius: 8px;
       color: var(--warn);
-      margin: 16px 0 24px;
+      margin: 12px 0 18px;
     }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
     .panel {
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
     }
     textarea, input[type=file] { width: 100%; }
     textarea {
-      min-height: 180px;
-      background: #0f1720;
-      color: var(--ink);
+      min-height: 90px;
       border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 10px;
-      font-family: inherit;
+      border-radius: 6px;
+      padding: 8px;
+      font: inherit;
     }
     button {
       background: var(--accent);
-      color: #0f1419;
+      color: white;
       border: 0;
-      border-radius: 8px;
-      padding: 10px 16px;
-      font-weight: 600;
+      border-radius: 6px;
+      padding: 9px 14px;
+      font-weight: 650;
       cursor: pointer;
+      margin-right: 8px;
+      margin-top: 8px;
     }
-    .muted { color: var(--muted); }
-    .card {
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 12px;
-      margin: 10px 0;
+    button.secondary { background: #3d4a5c; }
+    .muted { color: var(--muted); font-size: 0.95rem; }
+    .chip {
+      display: inline-block;
+      background: var(--demo);
+      border-radius: 999px;
+      padding: 2px 8px;
+      margin: 2px 4px 2px 0;
+      font-size: 0.85rem;
     }
+    .card { border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 8px 0; background: #fff; }
     .level { font-weight: 700; color: var(--accent); }
-    .quote { font-size: 0.92rem; color: var(--muted); border-left: 3px solid var(--accent); padding-left: 10px; }
-    pre { white-space: pre-wrap; word-break: break-word; }
+    .quote { font-size: 0.92rem; color: var(--muted); border-left: 3px solid var(--accent); padding-left: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { border-bottom: 1px solid var(--line); text-align: left; padding: 6px; vertical-align: top; }
+    .tabs button { background: #dfe8e5; color: var(--ink); }
+    .tabs button.active { background: var(--accent); color: #fff; }
+    details { margin-top: 6px; }
   </style>
 </head>
 <body>
   <header>
-    <h1>AI Technical Competency Review</h1>
-    <p class="muted">Evidence inventory from a CV. Not a hiring, interview, or pass/fail decision.</p>
+    <h1>CV competency and position evidence</h1>
+    <p class="muted">Upload CVs and position descriptions, then inspect demonstrated evidence. This is not a hiring or interview decision.</p>
     <div class="banner">
-      This tool reports which AI competencies are demonstrated, mentioned, or missing from the CV text.
-      It does not recommend hiring, interviewing, or rejecting anyone.
+      Assessments report what the CV text shows. Recommendations only order the documents you provided by demonstrated requirement overlap.
     </div>
   </header>
   <main>
-    <div class="panel">
-      <label>Upload CV (PDF, DOCX, TXT, MD)</label>
-      <input id="file" type="file" accept=".pdf,.docx,.txt,.md" />
-      <p class="muted">or paste text</p>
-      <textarea id="text" placeholder="Paste CV text here"></textarea>
-      <p>
-        <label><input id="llm" type="checkbox" /> Use LLM refinement if an API key is configured on the server</label>
-      </p>
-      <button id="run">Review competencies</button>
+    <div class="grid">
+      <section class="panel">
+        <h2>1. CVs</h2>
+        <input id="cv-files" type="file" accept=".pdf,.docx,.txt,.md" multiple />
+        <p class="muted">Or paste one CV. Demo samples can load several at once.</p>
+        <textarea id="cv-paste" placeholder="Paste a CV if you are not uploading files"></textarea>
+        <div id="cv-list" class="muted"></div>
+      </section>
+      <section class="panel">
+        <h2>2. Position descriptions</h2>
+        <input id="pos-files" type="file" accept=".pdf,.docx,.txt,.md" multiple />
+        <p class="muted">Or paste one position description.</p>
+        <textarea id="pos-paste" placeholder="Paste a position description"></textarea>
+        <div id="pos-list" class="muted"></div>
+      </section>
     </div>
+    <section class="panel">
+      <h2>3. Run</h2>
+      <label><input id="llm" type="checkbox" /> Use LLM refinement if an API key is configured</label>
+      <div>
+        <button id="demo" class="secondary" type="button">Load fictional samples</button>
+        <button id="run" type="button">Run assessment and recommendation</button>
+      </div>
+      <p class="muted">Samples are small and fictional on purpose. The dataset is only for demonstrating the workflow.</p>
+    </section>
     <div id="out"></div>
   </main>
   <script>
+    const state = { cvs: [], positions: [] };
     const out = document.getElementById("out");
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (ch) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[ch]));
+    }
+
+    function renderLists() {
+      document.getElementById("cv-list").innerHTML = state.cvs.map(d => `<span class="chip">${escapeHtml(d.filename)}</span>`).join("") || "No CVs loaded yet.";
+      document.getElementById("pos-list").innerHTML = state.positions.map(d => `<span class="chip">${escapeHtml(d.filename)}</span>`).join("") || "No positions loaded yet.";
+    }
+
+    async function filesToDocs(fileList) {
+      const docs = [];
+      for (const file of fileList) {
+        docs.push({ filename: file.name, text: await file.text() });
+      }
+      return docs;
+    }
+
+    document.getElementById("cv-files").addEventListener("change", async (ev) => {
+      state.cvs = await filesToDocs(ev.target.files);
+      renderLists();
+    });
+    document.getElementById("pos-files").addEventListener("change", async (ev) => {
+      state.positions = await filesToDocs(ev.target.files);
+      renderLists();
+    });
+
+    document.getElementById("demo").onclick = async () => {
+      out.innerHTML = "<p class='muted'>Loading samples…</p>";
+      const res = await fetch("/samples");
+      const data = await res.json();
+      state.cvs = data.cvs.map(d => ({ filename: d.filename, text: d.text }));
+      state.positions = data.positions.map(d => ({ filename: d.filename, text: d.text }));
+      document.getElementById("cv-paste").value = "";
+      document.getElementById("pos-paste").value = "";
+      renderLists();
+      out.innerHTML = "<p class='muted'>Loaded 3 fictional CVs and 3 fictional positions. Click run.</p>";
+    };
+
     document.getElementById("run").onclick = async () => {
-      out.innerHTML = "<p class='muted'>Reviewing…</p>";
-      const file = document.getElementById("file").files[0];
-      const text = document.getElementById("text").value.trim();
-      const useLlm = document.getElementById("llm").checked;
+      const cvFiles = [...document.getElementById("cv-files").files];
+      const posFiles = [...document.getElementById("pos-files").files];
+      const cvPaste = document.getElementById("cv-paste").value.trim();
+      const posPaste = document.getElementById("pos-paste").value.trim();
+      const binary = (f) => /\.(pdf|docx)$/i.test(f.name);
+      const hasBinary = cvFiles.some(binary) || posFiles.some(binary);
+
+      out.innerHTML = "<p class='muted'>Running retrieval and assessments…</p>";
       try {
         let data;
-        if (file) {
+        if (hasBinary) {
           const form = new FormData();
-          form.append("file", file);
-          if (useLlm) form.append("use_llm", "true");
-          const res = await fetch("/review", { method: "POST", body: form });
-          if (!res.ok) throw new Error(await res.text());
-          data = await res.json();
-        } else if (text) {
-          const res = await fetch("/review-text", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ cv_text: text, use_llm: useLlm || null })
-          });
+          (cvFiles.length ? cvFiles : []).forEach(f => form.append("cvs", f));
+          posFiles.forEach(f => form.append("positions", f));
+          if (document.getElementById("llm").checked) form.append("use_llm", "true");
+          if (!cvFiles.length) throw new Error("PDF/DOCX CVs must be uploaded with the file picker.");
+          const res = await fetch("/run-files", { method: "POST", body: form });
           if (!res.ok) throw new Error(await res.text());
           data = await res.json();
         } else {
-          throw new Error("Upload a file or paste CV text.");
+          const cvs = [];
+          const positions = [];
+          if (cvFiles.length) {
+            for (const file of cvFiles) cvs.push({ filename: file.name, text: await file.text() });
+          } else {
+            cvs.push(...state.cvs);
+          }
+          if (posFiles.length) {
+            for (const file of posFiles) positions.push({ filename: file.name, text: await file.text() });
+          } else {
+            positions.push(...state.positions);
+          }
+          if (cvPaste) cvs.push({ filename: "pasted-cv.txt", text: cvPaste });
+          if (posPaste) positions.push({ filename: "pasted-position.txt", text: posPaste });
+          if (!cvs.length) throw new Error("Provide at least one CV.");
+          const res = await fetch("/run", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              cvs,
+              positions,
+              use_llm: document.getElementById("llm").checked ? true : false
+            })
+          });
+          if (!res.ok) throw new Error(await res.text());
+          data = await res.json();
         }
-        render(data);
+        renderResults(data);
       } catch (err) {
-        out.innerHTML = `<p class="banner">${err.message}</p>`;
+        out.innerHTML = `<p class="banner">${escapeHtml(err.message)}</p>`;
       }
     };
 
-    function render(data) {
-      const cards = data.competencies.map(c => `
+    let currentTab = "table";
+    function renderResults(data) {
+      out.innerHTML = `
+        <section class="panel">
+          <p class="muted">${escapeHtml(data.note)}</p>
+          <div class="tabs">
+            <button type="button" data-tab="table" class="active">Evidence table</button>
+            <button type="button" data-tab="recs">Recommendations</button>
+            <button type="button" data-tab="skills">Competency reviews</button>
+          </div>
+          <div id="tab-table"></div>
+          <div id="tab-recs" hidden></div>
+          <div id="tab-skills" hidden></div>
+        </section>
+      `;
+      out.querySelectorAll(".tabs button").forEach(btn => {
+        btn.onclick = () => {
+          currentTab = btn.dataset.tab;
+          out.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("active", b === btn));
+          ["table", "recs", "skills"].forEach(name => {
+            document.getElementById("tab-" + name).hidden = name !== currentTab;
+          });
+        };
+      });
+      document.getElementById("tab-table").innerHTML = renderTable(data);
+      document.getElementById("tab-recs").innerHTML = renderRecs(data);
+      document.getElementById("tab-skills").innerHTML = renderSkills(data);
+    }
+
+    function renderTable(data) {
+      if (!data.alignments.length) {
+        return "<p class='muted'>No position descriptions were provided, so only competency reviews are available.</p>";
+      }
+      const rows = data.alignments.map(a => `
+        <tr>
+          <td>${escapeHtml(a.cv_label)}</td>
+          <td>${escapeHtml(a.position_title)}</td>
+          <td>${a.demonstrated_requirements}</td>
+          <td>${a.mentioned_requirements}</td>
+          <td>${a.missing_requirements}</td>
+          <td>${a.coverage_ratio}</td>
+        </tr>
+      `).join("");
+      const details = data.alignments.map(a => `
         <div class="card">
-          <div><strong>${c.area}</strong> — <span class="level">${c.apparent_level}</span></div>
-          <div class="muted">demonstrated: ${c.demonstrated} · mentioned without evidence: ${c.mentioned_without_evidence}</div>
-          <p>${c.assessment_notes}</p>
-          ${(c.evidence || []).map(e => `
-            <p class="quote"><em>${e.evidence_type}</em> · ${e.source_section}<br/>${e.quote}</p>
+          <strong>${escapeHtml(a.cv_label)}</strong> × <strong>${escapeHtml(a.position_title)}</strong>
+          <p class="muted">${escapeHtml(a.summary)}</p>
+          ${a.requirements.map(r => `
+            <details>
+              <summary><span class="level">${escapeHtml(r.coverage)}</span> — ${escapeHtml(r.requirement)}</summary>
+              <p>${escapeHtml(r.notes)}</p>
+              ${(r.evidence || []).map(e => `<p class="quote"><em>${escapeHtml(e.evidence_type)}</em> · ${escapeHtml(e.source_section)}<br/>${escapeHtml(e.quote)}</p>`).join("") || "<p class='muted'>No excerpt.</p>"}
+            </details>
           `).join("")}
         </div>
       `).join("");
-      const extra = (data.additional_ai_technologies || []).map(t =>
-        `<li>${t.name} — ${t.apparent_level}</li>`
-      ).join("") || "<li>None identified</li>";
-      out.innerHTML = `
-        <div class="panel">
-          <p><strong>${data.candidate_name || "Candidate name not detected"}</strong></p>
-          <p class="muted">${data.disclaimer}</p>
-          ${cards}
-          <h3>Additional AI technologies</h3>
-          <ul>${extra}</ul>
-          <h3>Not demonstrated</h3>
-          <p>${(data.skills_not_demonstrated || []).join(", ") || "None listed"}</p>
-          <h3>Insufficient information</h3>
-          <p>${(data.insufficient_information || []).join(", ") || "None listed"}</p>
-          <p class="muted">${data.review_limitations}</p>
-        </div>
+      return `
+        <table>
+          <thead><tr><th>CV</th><th>Position</th><th>Demonstrated</th><th>Mentioned only</th><th>Not found</th><th>Coverage ratio</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <p class="muted">Coverage ratio is demonstrated requirements divided by total requirements. It is not a hiring score.</p>
+        ${details}
       `;
     }
+
+    function renderRecs(data) {
+      if (!data.recommendations.length) return "<p class='muted'>Add position descriptions to see evidence-overlap ranking.</p>";
+      return data.recommendations.map(r => {
+        const items = r.ordered_matches.map(m => {
+          if (r.subject_kind === "cv") {
+            return `<li>${escapeHtml(m.position_title)} — demonstrated ${m.demonstrated_requirements}, mentioned ${m.mentioned_requirements}, not found ${m.missing_requirements} (ratio ${m.coverage_ratio})</li>`;
+          }
+          return `<li>${escapeHtml(m.cv_label)} — demonstrated ${m.demonstrated_requirements}, mentioned ${m.mentioned_requirements}, not found ${m.missing_requirements} (ratio ${m.coverage_ratio})</li>`;
+        }).join("");
+        return `
+        <div class="card">
+          <div><strong>${escapeHtml(r.subject_kind === "cv" ? "Positions for CV" : "CVs for position")}</strong>: ${escapeHtml(r.subject)}</div>
+          <p class="muted">${escapeHtml(r.method)}</p>
+          <ol>${items}</ol>
+          <p class="muted">${escapeHtml(r.caveat)}</p>
+        </div>`;
+      }).join("");
+    }
+
+    function renderSkills(data) {
+      return data.competency_reviews.map(review => `
+        <div class="card">
+          <h2>${escapeHtml(review.candidate_name || review.source_filename || "CV")}</h2>
+          <p class="muted">${escapeHtml(review.disclaimer)}</p>
+          ${review.competencies.map(c => `
+            <div class="card">
+              <div><strong>${escapeHtml(c.area)}</strong> — <span class="level">${escapeHtml(c.apparent_level)}</span></div>
+              <div class="muted">demonstrated: ${c.demonstrated} · mentioned without evidence: ${c.mentioned_without_evidence}</div>
+              <p>${escapeHtml(c.assessment_notes)}</p>
+              ${(c.evidence || []).map(e => `<p class="quote"><em>${escapeHtml(e.evidence_type)}</em> · ${escapeHtml(e.source_section)}<br/>${escapeHtml(e.quote)}</p>`).join("")}
+            </div>
+          `).join("")}
+          <p><strong>Not demonstrated:</strong> ${escapeHtml((review.skills_not_demonstrated || []).join(", ") || "None listed")}</p>
+          <p><strong>Insufficient information:</strong> ${escapeHtml((review.insufficient_information || []).join(", ") || "None listed")}</p>
+        </div>
+      `).join("");
+    }
+
+    renderLists();
   </script>
 </body>
 </html>

@@ -7,22 +7,23 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from cv_reviewer.chunking import chunk_cv
-from cv_reviewer.embeddings import build_embedder
-from cv_reviewer.ingest import SUPPORTED_SUFFIXES
+from cv_reviewer.ingest import SUPPORTED_SUFFIXES, ingest_bytes
+from cv_reviewer.matching_schema import AssessmentBundle
+from cv_reviewer.pipeline import TextDocument, run_assessment
 from cv_reviewer.reviewer import review_cv_bytes, review_cv_text
+from cv_reviewer.samples import load_sample_library
 from cv_reviewer.schema import CompetencyReview
-from cv_reviewer.vectorstore import InMemoryVectorStore
 
 STATIC_DIR = Path(__file__).parent / "static"
 
 app = FastAPI(
     title="CV AI Competency Reviewer",
     description=(
-        "Inventories AI technical competencies evidenced in a CV. "
+        "Inventories AI technical competencies evidenced in CVs and compares them with "
+        "position descriptions using retrieved excerpts. "
         "This service does not make hiring, pass/fail, interview, or employment decisions."
     ),
-    version="0.1.0",
+    version="0.2.0",
 )
 
 
@@ -32,22 +33,31 @@ class TextReviewRequest(BaseModel):
     use_llm: bool | None = None
 
 
-class AskRequest(BaseModel):
-    cv_text: str = Field(min_length=40)
-    question: str = Field(min_length=5)
-    top_k: int = Field(default=4, ge=1, le=10)
+class NamedText(BaseModel):
+    filename: str = "document.txt"
+    text: str = Field(min_length=20)
 
 
-class AskResponse(BaseModel):
-    question: str
-    answer_mode: str
-    retrieved_excerpts: list[dict]
-    note: str
+class RunRequest(BaseModel):
+    cvs: list[NamedText]
+    positions: list[NamedText] = Field(default_factory=list)
+    use_llm: bool | None = False
+
+
+def _parse_llm_flag(use_llm: str | None) -> bool | None:
+    if use_llm is None or use_llm == "":
+        return None
+    return use_llm.strip().lower() in {"1", "true", "yes", "on"}
 
 
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/samples")
+def samples() -> dict:
+    return load_sample_library()
 
 
 @app.post("/review", response_model=CompetencyReview)
@@ -59,13 +69,8 @@ async def review_upload(
     if suffix not in SUPPORTED_SUFFIXES:
         raise HTTPException(status_code=400, detail="Upload a PDF, DOCX, TXT, or MD file.")
     data = await file.read()
-    parsed_llm: bool | None
-    if use_llm is None or use_llm == "":
-        parsed_llm = None
-    else:
-        parsed_llm = use_llm.strip().lower() in {"1", "true", "yes", "on"}
     try:
-        return review_cv_bytes(data, filename=file.filename or "cv.txt", use_llm=parsed_llm)
+        return review_cv_bytes(data, filename=file.filename or "cv.txt", use_llm=_parse_llm_flag(use_llm))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -75,40 +80,44 @@ def review_text(payload: TextReviewRequest) -> CompetencyReview:
     return review_cv_text(payload.cv_text, filename=payload.filename, use_llm=payload.use_llm)
 
 
-@app.post("/ask", response_model=AskResponse)
-def ask_cv(payload: AskRequest) -> AskResponse:
-    """Retrieve CV excerpts relevant to a reviewer question.
+@app.post("/run", response_model=AssessmentBundle)
+def run(payload: RunRequest) -> AssessmentBundle:
+    if not payload.cvs:
+        raise HTTPException(status_code=400, detail="Provide at least one CV.")
+    cvs = [TextDocument(filename=item.filename, text=item.text) for item in payload.cvs]
+    positions = [TextDocument(filename=item.filename, text=item.text) for item in payload.positions]
+    try:
+        return run_assessment(cvs, positions, use_llm=payload.use_llm)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    Returns evidence only. It does not answer whether to hire or interview anyone.
-    """
-    lowered = payload.question.lower()
-    blocked = ("hire", "hiring", "interview", "reject", "offer", "pass", "fail")
-    if any(term in lowered for term in blocked):
-        raise HTTPException(
-            status_code=400,
-            detail="Questions about hiring, interviews, or pass/fail outcomes are not supported.",
-        )
-    chunks = chunk_cv(payload.cv_text)
-    store = InMemoryVectorStore(build_embedder())
-    store.add(chunks)
-    hits = store.query(payload.question, top_k=payload.top_k)
-    excerpts = [
-        {
-            "section": item.chunk.section,
-            "score": round(item.score, 4),
-            "text": item.chunk.text,
-        }
-        for item in hits
-    ]
-    return AskResponse(
-        question=payload.question,
-        answer_mode="retrieved_excerpts_only",
-        retrieved_excerpts=excerpts,
-        note=(
-            "These excerpts were retrieved by embedding similarity. "
-            "They are evidence from the CV, not a competency judgement or employment decision."
-        ),
-    )
+
+@app.post("/run-files", response_model=AssessmentBundle)
+async def run_files(
+    cvs: list[UploadFile] = File(default=[]),
+    positions: list[UploadFile] = File(default=[]),
+    use_llm: str | None = Form(default=None),
+) -> AssessmentBundle:
+    if not cvs:
+        raise HTTPException(status_code=400, detail="Upload at least one CV.")
+    cv_docs: list[TextDocument] = []
+    pos_docs: list[TextDocument] = []
+    try:
+        for file in cvs:
+            suffix = Path(file.filename or "").suffix.lower()
+            if suffix not in SUPPORTED_SUFFIXES:
+                raise HTTPException(status_code=400, detail=f"Unsupported CV type: {file.filename}")
+            ingested = ingest_bytes(await file.read(), filename=file.filename or "cv.txt")
+            cv_docs.append(TextDocument(filename=ingested.filename, text=ingested.text))
+        for file in positions:
+            suffix = Path(file.filename or "").suffix.lower()
+            if suffix not in SUPPORTED_SUFFIXES:
+                raise HTTPException(status_code=400, detail=f"Unsupported position type: {file.filename}")
+            ingested = ingest_bytes(await file.read(), filename=file.filename or "position.txt")
+            pos_docs.append(TextDocument(filename=ingested.filename, text=ingested.text))
+        return run_assessment(cv_docs, pos_docs, use_llm=_parse_llm_flag(use_llm) or False)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.get("/")

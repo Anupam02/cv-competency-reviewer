@@ -1,0 +1,13 @@
+Position: AI Platform Engineer
+Team: Platform
+Location: Fictional City
+
+We are looking for someone who has built production AI systems, not only listed tools.
+
+Requirements
+- Design and implement Python services that call LLM APIs
+- Build Retrieval-Augmented Generation pipelines with chunking, embeddings, and a vector database
+- Use FAISS, Chroma, or a similar vector store for similarity search
+- Integrate model APIs (OpenAI, Anthropic, or equivalent) behind a FastAPI service
+- Evaluate retrieval and generation quality with a documented approach
+- Reason about AI solution architecture: latency, cost, tracing, and guardrails

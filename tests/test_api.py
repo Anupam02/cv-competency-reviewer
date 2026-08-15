@@ -14,10 +14,26 @@ Skills
 PyTorch
 """
 
+POSITION = """Position: Retrieval Engineer
+
+Requirements
+- Build RAG pipelines
+- Use a vector database
+- Call an LLM API from Python
+"""
+
 
 def test_health() -> None:
     res = client.get("/health")
     assert res.status_code == 200
+
+
+def test_samples_endpoint() -> None:
+    res = client.get("/samples")
+    assert res.status_code == 200
+    body = res.json()
+    assert len(body["cvs"]) >= 3
+    assert len(body["positions"]) >= 3
 
 
 def test_review_text_endpoint() -> None:
@@ -28,14 +44,19 @@ def test_review_text_endpoint() -> None:
     assert "employment determination" in body["disclaimer"]
 
 
-def test_ask_rejects_hiring_questions() -> None:
-    res = client.post("/ask", json={"cv_text": CV, "question": "Should we hire this person?"})
-    assert res.status_code == 400
-
-
-def test_ask_returns_excerpts() -> None:
-    res = client.post("/ask", json={"cv_text": CV, "question": "What evidence is there of RAG?"})
+def test_run_bundle() -> None:
+    res = client.post(
+        "/run",
+        json={
+            "cvs": [{"filename": "casey.txt", "text": CV}],
+            "positions": [{"filename": "role.txt", "text": POSITION}],
+            "use_llm": False,
+        },
+    )
     assert res.status_code == 200
     body = res.json()
-    assert body["retrieved_excerpts"]
-    assert body["answer_mode"] == "retrieved_excerpts_only"
+    assert body["competency_reviews"]
+    assert body["alignments"]
+    assert body["recommendations"]
+    alignment = body["alignments"][0]
+    assert alignment["demonstrated_requirements"] >= 1

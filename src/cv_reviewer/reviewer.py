@@ -47,7 +47,7 @@ def review_cv_text(
 
     retrieved = {area.id: retrieve_for_area(store, area) for area in REQUIRED_AREAS}
     extra = find_additional_technologies(chunks)
-    name = _guess_name(text)
+    name = guess_name(text)
 
     review = heuristic_review(
         chunks=chunks,
@@ -86,7 +86,7 @@ def _excerpt_pack(retrieved: dict) -> str:
     return "\n".join(parts)
 
 
-def _guess_name(text: str) -> str | None:
+def guess_name(text: str) -> str | None:
     first = text.strip().splitlines()[0].strip() if text.strip() else ""
     if 2 <= len(first.split()) <= 5 and len(first) <= 60 and not first.lower().endswith(":"):
         if re.match(r"^[A-Za-z][A-Za-z .'-]+$", first):
