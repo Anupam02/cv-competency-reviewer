@@ -1,12 +1,36 @@
-# CV AI Competency Reviewer
+# CV competency and position evidence
 
-Python application that reviews a candidate CV for **demonstrated AI technical competence**.
+A small Python web application that:
 
-It inventories evidence. It does **not** make a hiring, pass/fail, interview, ranking, or employment decision.
+1. Reviews **AI technical competencies** evidenced in one or more CVs.
+2. Compares those CVs with **position descriptions** and ranks evidence overlap.
 
-## Use Case 1 — AI Technical Competency Review
+It does **not** make a hiring, pass/fail, interview, ranking-for-employment, or offer decision. “Recommendation” here means: among the documents you uploaded, which pairs have more **demonstrated** requirement evidence.
 
-Given a CV (PDF, DOCX, TXT, or Markdown), the application reviews these areas:
+The sample CVs and positions are fictional and small on purpose.
+
+## User flow
+
+1. Open the UI.
+2. Upload one or more CVs, or click **Load fictional samples**.
+3. Provide one or more position descriptions the same way.
+4. Run **assessment and recommendation**.
+5. Inspect:
+   - a CV × position table (demonstrated / mentioned only / not found)
+   - quotes from the CV that support each requirement
+   - the nine AI competency areas per CV
+
+```bash
+python -m pip install --upgrade "pip>=24.2"
+python -m pip install -r requirements.txt
+python -m uvicorn cv_reviewer.api:app --port 8000
+```
+
+Open http://127.0.0.1:8000
+
+## What is assessed
+
+For each CV, the nine required AI areas plus any extra AI technologies found in the text:
 
 - Python
 - Large Language Models (LLMs)
@@ -17,101 +41,73 @@ Given a CV (PDF, DOCX, TXT, or Markdown), the application reviews these areas:
 - AI frameworks and libraries
 - Model integration and APIs
 - AI solution architecture
-- Other relevant AI technologies identified from the CV
 
-The structured review explains:
+**Mentioned vs demonstrated.** A skills-list bullet is a mention. The same technology described in Experience or Projects with activity (built, deployed, trained, evaluated, integrated) is demonstrated.
 
-- which AI competencies are demonstrated
-- the apparent level in each area
-- the CV evidence supporting each assessment
-- skills that are not demonstrated
-- areas with insufficient information
+## Architecture
 
-**Mentioned vs demonstrated.** A technology listed under Skills is treated as a mention. The same technology described in Experience or Projects with activity (built, deployed, trained, evaluated, integrated) is treated as demonstrated.
-
-## How it works
-
-1. **Ingest** CV text from PDF / DOCX / plain text.
-2. **Chunk** by detected sections (Experience, Skills, Projects, …).
-3. **Embed** chunks (hashed n-gram vectors by default; optional `sentence-transformers`).
-4. **Retrieve** with an in-memory cosine vector index — one query set per competency area (RAG).
-5. **Assess** each area from retrieved excerpts, classifying evidence type and level.
-6. **Optional LLM refinement** if `OPENAI_API_KEY` is set. The model may only use retrieved excerpts and must not produce an employment decision.
-
-Default mode needs no API key so the pipeline is testable and reproducible.
-
-## Setup
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade "pip>=24.2"
-python -m pip install -r requirements.txt
+```
+CV / JD files
+    → ingest (PDF, DOCX, TXT)
+    → section-aware chunking
+    → embeddings + in-memory cosine index
+    → retrieve excerpts (RAG)
+    → classify evidence (demonstrated | mentioned | not found)
+    → structured JSON + HTML UI
 ```
 
-If you already have packages in the environment (for example `uvicorn[standard]==0.34.3`), keep that version instead of letting pip backtrack:
-
-```bash
-python -m pip install -e ".[dev]" --upgrade-strategy only-if-needed
-```
-
-Do not install `uvicorn` and `uvicorn[standard]` as separate requirements. This project depends on plain `uvicorn>=0.32,<1`, which is compatible with 0.34.3.
-
-Optional semantic embeddings:
-
-```bash
-pip install -e ".[dev,semantic]"
-export EMBEDDING_BACKEND=sentence-transformers
-```
-
-Optional LLM refinement (OpenAI-compatible):
-
-```bash
-export OPENAI_API_KEY=...
-export OPENAI_MODEL=gpt-4o-mini
-# export OPENAI_BASE_URL=https://api.openai.com/v1
-```
+| Choice | Why |
+| --- | --- |
+| Python + FastAPI + HTML | One language, a real UI, no notebook-only demo |
+| Hashed n-gram embeddings by default | Deterministic, no model download, tests run offline |
+| Optional sentence-transformers | Swap denser semantics with `EMBEDDING_BACKEND=sentence-transformers` |
+| In-memory vector index | Enough for a handful of CVs; same add/query shape as FAISS/Chroma |
+| Heuristic review as the primary path | Mention vs demonstration is a rule we can explain and test |
+| Optional LLM refinement | Only rewrites the structured review from retrieved excerpts |
+| Coverage ratio, not a “fit score” | Avoids pretending the model can decide employment |
 
 ## CLI
 
 ```bash
+python -m cv_reviewer --cvs sample_cvs/*.txt --positions sample_positions/*.txt --pretty --no-llm
 python -m cv_reviewer sample_cvs/strong_ai_engineer.txt --pretty --no-llm
-python -m cv_reviewer sample_cvs/keyword_only.txt --pretty --no-llm
 ```
 
-## HTTP API and UI
-
-```bash
-uvicorn cv_reviewer.api:app --reload --port 8000
-```
-
-Open http://127.0.0.1:8000
+## API
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET | `/` | Upload UI |
+| GET | `/` | UI |
 | GET | `/health` | Liveness |
-| POST | `/review` | File upload review |
-| POST | `/review-text` | JSON `{ "cv_text": "..." }` |
-| POST | `/ask` | Retrieve CV excerpts for a factual question (no hiring questions) |
+| GET | `/samples` | Fictional CVs and positions |
+| POST | `/run` | JSON: `{ "cvs": [...], "positions": [...] }` |
+| POST | `/run-files` | Multipart upload of CV and position files |
+| POST | `/review` | Single CV file, competency review only |
+| POST | `/review-text` | Single CV as JSON |
 
 ## Tests
 
 ```bash
-pytest
+python -m pytest
 ```
 
-Sample CVs:
+## Limitations (honest)
 
-- `sample_cvs/strong_ai_engineer.txt` — activity-based evidence across the required areas
-- `sample_cvs/keyword_only.txt` — AI terms listed, backend work described in Java
-- `sample_cvs/sparse.txt` — almost no AI content
+- A CV is not verified work. Missing text is not proof the person cannot do the work.
+- Hashed embeddings are lexical; similar phrasing without shared tokens can be missed.
+- Requirement parsing expects bullet lists. Free-prose JDs are chunked more coarsely.
+- Coverage ratio can be gamed by short JDs or keyword stuffing.
+- Optional LLM output can still drift; the UI always shows the underlying quotes.
 
-## Design choices
+## If this were production
 
-- **No employment decision** is encoded in prompts, API validation, and output sanitisation.
-- **Retrieval before generation** so assessments are grounded in CV passages.
-- **Heuristic review is first-class**, not a degraded mode: it distinguishes skills lists from project evidence even without an LLM.
-- **Hashable embeddings** keep CI deterministic; sentence-transformers can be swapped in via `EMBEDDING_BACKEND`.
+- Persistent vector DB, access control, and audit logs
+- Human review required before any downstream HR use
+- Evaluation set of labelled mention vs demonstration examples
+- Bias and completeness checks (gaps in CVs that reflect formatting, not skill)
+- Stronger PDF layout extraction
+- Separate indexing from query, plus tracing of every retrieval
 
-Only Use Case 1 was specified in the request. The `/ask` endpoint is supporting evidence retrieval over the same index, still without employment decisions.
+## Presentation notes
+
+Be ready to demo **Load fictional samples → Run**, open one CV × AI Platform Engineer row, and show a demonstrated quote versus the keyword-only CV (AI terms listed, Java work described). Then explain why the backend position picks up the Java REST API evidence and why that still is not a hiring decision.

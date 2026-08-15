@@ -1,0 +1,12 @@
+Position: Backend Services Engineer
+Team: Commerce
+Location: Fictional City
+
+This role is about reliable transactional services. Generative AI is not required.
+
+Requirements
+- Develop and maintain Java REST APIs
+- Write and tune SQL for operational reporting
+- Support checkout or inventory services in production
+- Collaborate with operations on weekly dashboards
+- Document service behaviour and incident follow-up
