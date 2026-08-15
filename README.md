@@ -45,8 +45,17 @@ Default mode needs no API key so the pipeline is testable and reproducible.
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -e ".[dev]"
+python -m pip install --upgrade "pip>=24.2"
+python -m pip install -r requirements.txt
 ```
+
+If you already have packages in the environment (for example `uvicorn[standard]==0.34.3`), keep that version instead of letting pip backtrack:
+
+```bash
+python -m pip install -e ".[dev]" --upgrade-strategy only-if-needed
+```
+
+Do not install `uvicorn` and `uvicorn[standard]` as separate requirements. This project depends on plain `uvicorn>=0.32,<1`, which is compatible with 0.34.3.
 
 Optional semantic embeddings:
 
