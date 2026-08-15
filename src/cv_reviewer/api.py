@@ -53,14 +53,19 @@ def health() -> dict[str, str]:
 @app.post("/review", response_model=CompetencyReview)
 async def review_upload(
     file: UploadFile = File(...),
-    use_llm: bool | None = Form(default=None),
+    use_llm: str | None = Form(default=None),
 ) -> CompetencyReview:
     suffix = Path(file.filename or "").suffix.lower()
     if suffix not in SUPPORTED_SUFFIXES:
         raise HTTPException(status_code=400, detail="Upload a PDF, DOCX, TXT, or MD file.")
     data = await file.read()
+    parsed_llm: bool | None
+    if use_llm is None or use_llm == "":
+        parsed_llm = None
+    else:
+        parsed_llm = use_llm.strip().lower() in {"1", "true", "yes", "on"}
     try:
-        return review_cv_bytes(data, filename=file.filename or "cv.txt", use_llm=use_llm)
+        return review_cv_bytes(data, filename=file.filename or "cv.txt", use_llm=parsed_llm)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

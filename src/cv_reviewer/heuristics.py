@@ -89,7 +89,7 @@ def _assess_area(area: CompetencyArea, scored: list[ScoredChunk]) -> CompetencyA
     mentioned = False
     for item in scored:
         hits = keyword_hits(item.chunk.text, area.keywords + area.related_tech)
-        if not hits and item.score < 0.28:
+        if not hits:
             continue
         etype = classify_evidence_type(item.chunk, hits)
         if etype == "demonstrated":

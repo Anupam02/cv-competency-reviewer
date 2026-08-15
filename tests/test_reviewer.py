@@ -29,6 +29,8 @@ def test_keyword_only_cv_is_mentioned_not_demonstrated() -> None:
     python = by_area["Python"]
     # Python is only in the skills list on this sample.
     assert python.demonstrated is False
+    apis = by_area["Model integration and APIs"]
+    assert apis.demonstrated is False
 
 
 def test_sparse_cv_marks_gaps() -> None:

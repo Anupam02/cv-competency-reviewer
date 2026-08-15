@@ -173,6 +173,7 @@ REQUIRED_AREAS: tuple[CompetencyArea, ...] = (
             "integrated a model API or deployed an inference endpoint",
         ),
         keywords=(
+            "openai",
             "openai api",
             "anthropic",
             "azure openai",
@@ -182,8 +183,8 @@ REQUIRED_AREAS: tuple[CompetencyArea, ...] = (
             "model serving",
             "vllm",
             "triton",
-            "rest api",
-            "sdk",
+            "model api",
+            "llm api",
         ),
     ),
     CompetencyArea(

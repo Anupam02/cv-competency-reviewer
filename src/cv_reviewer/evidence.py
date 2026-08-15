@@ -103,8 +103,7 @@ def relevant_chunks(scored: list[ScoredChunk], area: CompetencyArea) -> list[Sco
     kept: list[ScoredChunk] = []
     for item in scored:
         hits = keyword_hits(item.chunk.text, area.keywords + area.related_tech)
-        # Keep semantic neighbours even without exact keywords if the score is strong.
-        if hits or item.score >= 0.22:
+        if hits:
             kept.append(item)
     return kept
 
