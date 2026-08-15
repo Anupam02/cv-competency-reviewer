@@ -1,0 +1,23 @@
+Alex Rivera
+London, UK | alex.rivera@example.com
+
+Summary
+AI engineer who designs and ships retrieval-augmented generation systems in production Python services.
+
+Experience
+Senior AI Engineer, Northwind Labs (2022–2026)
+- Designed an end-to-end RAG architecture: PDF ingestion, recursive chunking, embedding generation with sentence-transformers, FAISS vector index, hybrid search, and reranking before GPT-4o generation.
+- Implemented evaluation with a golden set of 80 question-answer pairs, measuring faithfulness and context recall; added LangSmith tracing for latency and cost.
+- Integrated OpenAI and Anthropic APIs behind a FastAPI inference service, with retries, output schema validation, and prompt versioning.
+- Fine-tuned a Llama 3 8B adapter with LoRA/PEFT for internal support questions and served it with vLLM.
+- Trained and evaluated classical models in scikit-learn and a PyTorch ranking model for document relevance.
+
+Projects
+- Built a Chroma-backed research assistant that embeds papers and answers questions only from retrieved passages.
+- Published an internal design doc covering chunk size trade-offs, embedding model choice, and guardrails.
+
+Skills
+Python, FastAPI, pytest, PyTorch, Hugging Face Transformers, LangChain, FAISS, Chroma, OpenAI API, Docker, Kubernetes
+
+Education
+MSc Computer Science

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Technical Competency Review</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2330;
+      --ink: #e8eef5;
+      --muted: #9aa8b8;
+      --accent: #7dd3c7;
+      --warn: #f0c36d;
+      --line: #2a3848;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    header, main { max-width: 960px; margin: 0 auto; padding: 24px; }
+    h1 { font-size: 1.6rem; margin: 0 0 8px; }
+    .banner {
+      background: #243044;
+      border: 1px solid var(--line);
+      padding: 12px 14px;
+      border-radius: 10px;
+      color: var(--warn);
+      margin: 16px 0 24px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    textarea, input[type=file] { width: 100%; }
+    textarea {
+      min-height: 180px;
+      background: #0f1720;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      font-family: inherit;
+    }
+    button {
+      background: var(--accent);
+      color: #0f1419;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .muted { color: var(--muted); }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px;
+      margin: 10px 0;
+    }
+    .level { font-weight: 700; color: var(--accent); }
+    .quote { font-size: 0.92rem; color: var(--muted); border-left: 3px solid var(--accent); padding-left: 10px; }
+    pre { white-space: pre-wrap; word-break: break-word; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AI Technical Competency Review</h1>
+    <p class="muted">Evidence inventory from a CV. Not a hiring, interview, or pass/fail decision.</p>
+    <div class="banner">
+      This tool reports which AI competencies are demonstrated, mentioned, or missing from the CV text.
+      It does not recommend hiring, interviewing, or rejecting anyone.
+    </div>
+  </header>
+  <main>
+    <div class="panel">
+      <label>Upload CV (PDF, DOCX, TXT, MD)</label>
+      <input id="file" type="file" accept=".pdf,.docx,.txt,.md" />
+      <p class="muted">or paste text</p>
+      <textarea id="text" placeholder="Paste CV text here"></textarea>
+      <p>
+        <label><input id="llm" type="checkbox" /> Use LLM refinement if an API key is configured on the server</label>
+      </p>
+      <button id="run">Review competencies</button>
+    </div>
+    <div id="out"></div>
+  </main>
+  <script>
+    const out = document.getElementById("out");
+    document.getElementById("run").onclick = async () => {
+      out.innerHTML = "<p class='muted'>Reviewing…</p>";
+      const file = document.getElementById("file").files[0];
+      const text = document.getElementById("text").value.trim();
+      const useLlm = document.getElementById("llm").checked;
+      try {
+        let data;
+        if (file) {
+          const form = new FormData();
+          form.append("file", file);
+          if (useLlm) form.append("use_llm", "true");
+          const res = await fetch("/review", { method: "POST", body: form });
+          if (!res.ok) throw new Error(await res.text());
+          data = await res.json();
+        } else if (text) {
+          const res = await fetch("/review-text", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ cv_text: text, use_llm: useLlm || null })
+          });
+          if (!res.ok) throw new Error(await res.text());
+          data = await res.json();
+        } else {
+          throw new Error("Upload a file or paste CV text.");
+        }
+        render(data);
+      } catch (err) {
+        out.innerHTML = `<p class="banner">${err.message}</p>`;
+      }
+    };
+
+    function render(data) {
+      const cards = data.competencies.map(c => `
+        <div class="card">
+          <div><strong>${c.area}</strong> — <span class="level">${c.apparent_level}</span></div>
+          <div class="muted">demonstrated: ${c.demonstrated} · mentioned without evidence: ${c.mentioned_without_evidence}</div>
+          <p>${c.assessment_notes}</p>
+          ${(c.evidence || []).map(e => `
+            <p class="quote"><em>${e.evidence_type}</em> · ${e.source_section}<br/>${e.quote}</p>
+          `).join("")}
+        </div>
+      `).join("");
+      const extra = (data.additional_ai_technologies || []).map(t =>
+        `<li>${t.name} — ${t.apparent_level}</li>`
+      ).join("") || "<li>None identified</li>";
+      out.innerHTML = `
+        <div class="panel">
+          <p><strong>${data.candidate_name || "Candidate name not detected"}</strong></p>
+          <p class="muted">${data.disclaimer}</p>
+          ${cards}
+          <h3>Additional AI technologies</h3>
+          <ul>${extra}</ul>
+          <h3>Not demonstrated</h3>
+          <p>${(data.skills_not_demonstrated || []).join(", ") || "None listed"}</p>
+          <h3>Insufficient information</h3>
+          <p>${(data.insufficient_information || []).join(", ") || "None listed"}</p>
+          <p class="muted">${data.review_limitations}</p>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
