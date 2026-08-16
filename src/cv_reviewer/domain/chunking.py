@@ -40,22 +40,69 @@ _HEADING_RE = re.compile(
     re.IGNORECASE,
 )
 
+_BULLET_PREFIX_RE = re.compile(r"^(?:[-*+•●◦▪▸►–—·]|\d+[.)]|\(\d+\))\s+")
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+
 
 def chunk_cv(text: str, max_chars: int = 900, overlap: int = 120) -> list[Chunk]:
-    """Split a CV into overlapping windows, preserving detected section names."""
+    """Split a CV into per-claim chunks, preserving detected section names.
+
+    Each non-empty line in a section is one chunk so classification can judge
+    bullets independently. Oversized lines are split by sentence, then by
+    character windows as a last resort.
+    """
     sections = _split_sections(text)
     chunks: list[Chunk] = []
     idx = 0
     for section, body in sections:
-        windows = _windows(body, max_chars=max_chars, overlap=overlap)
-        if not windows:
-            continue
-        for window in windows:
-            chunks.append(Chunk(text=window, section=section, index=idx))
+        for piece in _chunk_section_body(body, max_chars=max_chars, overlap=overlap):
+            chunks.append(Chunk(text=piece, section=section, index=idx))
             idx += 1
     if not chunks:
         chunks.append(Chunk(text=text.strip(), section="unknown", index=0))
     return chunks
+
+
+def _strip_bullet_prefix(line: str) -> str:
+    return _BULLET_PREFIX_RE.sub("", line.strip(), count=1)
+
+
+def _chunk_section_body(body: str, max_chars: int, overlap: int) -> list[str]:
+    pieces: list[str] = []
+    for raw_line in body.splitlines():
+        line = _strip_bullet_prefix(raw_line)
+        if not line:
+            continue
+        if len(line) <= max_chars:
+            pieces.append(line)
+            continue
+        pieces.extend(_split_long_line(line, max_chars=max_chars, overlap=overlap))
+    return pieces
+
+
+def _split_long_line(line: str, max_chars: int, overlap: int) -> list[str]:
+    sentences = [part.strip() for part in _SENTENCE_SPLIT_RE.split(line) if part.strip()]
+    if not sentences:
+        return _windows(line, max_chars=max_chars, overlap=overlap)
+
+    grouped: list[str] = []
+    current = ""
+    for sentence in sentences:
+        if len(sentence) > max_chars:
+            if current:
+                grouped.append(current)
+                current = ""
+            grouped.extend(_windows(sentence, max_chars=max_chars, overlap=overlap))
+            continue
+        candidate = f"{current} {sentence}".strip() if current else sentence
+        if len(candidate) <= max_chars:
+            current = candidate
+        else:
+            grouped.append(current)
+            current = sentence
+    if current:
+        grouped.append(current)
+    return grouped
 
 
 def _split_sections(text: str) -> list[tuple[str, str]]:
