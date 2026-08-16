@@ -53,6 +53,34 @@ Experience
     assert "AI frameworks and libraries" not in review.skills_not_demonstrated
 
 
+def test_pytorch_tensorflow_count_as_ml_dl_signal() -> None:
+    cv = """Casey Ng
+
+Experience
+- Trained and fine-tuned a model using PyTorch.
+- Briefly touched TensorFlow while pairing on a bug fix with a teammate.
+"""
+    review = review_cv_text(cv, filename="casey-ml.txt", use_llm=False)
+    by_area = {c.area: c for c in review.competencies}
+    ml = by_area["Machine Learning / Deep Learning"]
+    assert ml.evidence, "PyTorch/TensorFlow-only ML work must retrieve ML/DL evidence"
+    assert ml.apparent_level != "not_demonstrated"
+    assert ml.demonstrated is True
+    assert any(item.evidence_type == "demonstrated" for item in ml.evidence)
+
+    incidental = """Priya Shah
+
+Experience
+- Maintained a Java billing service and SQL reports.
+- Briefly touched TensorFlow while pairing on a bug fix with a teammate.
+"""
+    thin = review_cv_text(incidental, filename="priya-ml.txt", use_llm=False)
+    ml_thin = {c.area: c for c in thin.competencies}["Machine Learning / Deep Learning"]
+    assert ml_thin.evidence
+    assert ml_thin.demonstrated is False
+    assert ml_thin.apparent_level == "insufficient_information"
+
+
 def test_empty_area_is_not_demonstrated_not_insufficient() -> None:
     retrieved = {area.id: [] for area in REQUIRED_AREAS}
     review = heuristic_review(

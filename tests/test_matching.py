@@ -11,6 +11,17 @@ def test_parse_position_extracts_bullets() -> None:
     assert len(position.requirements) >= 5
 
 
+def test_bmc_project_architect_jd_parses_requirements() -> None:
+    path = Path("sample_positions/bmc_project_architect_consulting_india.txt")
+    position = parse_position(path.read_text(encoding="utf-8"), path.name)
+    assert "Project Architect" in position.title
+    assert len(position.requirements) >= 18
+    blob = " ".join(position.requirements).lower()
+    assert "python" in blob
+    assert "rag" in blob or "retrieval-augmented" in blob
+    assert "pgvector" in blob or "vector" in blob
+
+
 def test_strong_cv_has_more_ai_evidence_than_sparse() -> None:
     root = Path("sample_cvs")
     pos = Path("sample_positions/ai_platform_engineer.txt")

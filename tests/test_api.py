@@ -36,7 +36,7 @@ def test_samples_endpoint() -> None:
     assert res.status_code == 200
     body = res.json()
     assert len(body["cvs"]) >= 3
-    assert len(body["positions"]) >= 3
+    assert len(body["positions"]) >= 4
 
 
 def test_review_text_endpoint() -> None:
