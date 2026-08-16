@@ -3,17 +3,17 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from cv_reviewer.chunking import chunk_cv
-from cv_reviewer.evidence import classify_evidence_type
+from cv_reviewer.domain.chunking import chunk_cv
+from cv_reviewer.domain.evidence_policy import classify_evidence_type
+from cv_reviewer.domain.models import DISCLAIMER, EvidenceItem
+from cv_reviewer.domain.taxonomy import REQUIRED_AREAS
 from cv_reviewer.matching_schema import (
     AssessmentBundle,
     EvidenceRecommendation,
     PositionAlignment,
     RequirementAlignment,
 )
-from cv_reviewer.schema import DISCLAIMER, EvidenceItem
-from cv_reviewer.taxonomy import REQUIRED_AREAS
-from cv_reviewer.vectorstore import InMemoryVectorStore
+from cv_reviewer.infrastructure.vectorstore import InMemoryVectorStore
 
 WEAK_MATCH_TERMS = {
     "build",

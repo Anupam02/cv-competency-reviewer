@@ -3,12 +3,14 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-from cv_reviewer.chunking import chunk_cv
-from cv_reviewer.embeddings import build_embedder
+from cv_reviewer.application.review_cv import guess_name
+from cv_reviewer.composition import build_review_service
+from cv_reviewer.domain.chunking import chunk_cv
+from cv_reviewer.infrastructure.embeddings import build_embedder
+from cv_reviewer.infrastructure.llm_openai import llm_enabled
+from cv_reviewer.infrastructure.vectorstore import InMemoryVectorStore
 from cv_reviewer.matching import align_cv_to_position, bundle_results, parse_position
 from cv_reviewer.matching_schema import AssessmentBundle
-from cv_reviewer.reviewer import guess_name, review_cv_text
-from cv_reviewer.vectorstore import InMemoryVectorStore
 
 
 @dataclass
@@ -25,8 +27,10 @@ def run_assessment(
 ) -> AssessmentBundle:
     if not cvs:
         raise ValueError("Provide at least one CV.")
+    enabled = llm_enabled() if use_llm is None else use_llm
+    service = build_review_service(use_llm=enabled)
     reviews = [
-        review_cv_text(doc.text, filename=doc.filename, use_llm=use_llm) for doc in cvs
+        service.review_text(doc.text, filename=doc.filename, use_llm=enabled) for doc in cvs
     ]
     parsed_positions = [parse_position(doc.text, doc.filename) for doc in positions]
     alignments = []

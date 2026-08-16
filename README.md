@@ -52,6 +52,28 @@ Position descriptions are **not** a second exercise use case. They are only ther
 | Optional OpenAI-compatible LLM | May refine the JSON using **retrieved excerpts only** |
 | Small fictional samples | The brief says dataset size/realism is not scored |
 
+### Architecture (Clean Architecture + DDD-lite)
+
+The first cut of this repo is **CV competency review**. Domain rules do not depend on FastAPI, PDFs, or OpenAI.
+
+```
+interfaces/          HTTP + CLI
+application/         ReviewCvService use case + ports (DIP)
+domain/              evidence policy, levels, taxonomy, no I/O
+infrastructure/      PDF ingest, embeddings, vector index, optional LLM
+composition.py       wires adapters into the use case
+```
+
+| Principle | How it shows up |
+| --- | --- |
+| DDD ubiquitous language | `demonstrated`, `mentioned`, `CompetencyArea`, `CompetencyReview` |
+| Bounded context | Evidence inventory only — no hiring decision in the domain |
+| Dependency inversion | `VectorIndexPort` / `LlmRefinerPort`; numpy/OpenAI stay in infrastructure |
+| Single responsibility | Policy ≠ retrieval ≠ HTTP |
+| Open/closed | New embedder or vector DB implements the port without changing the use case |
+
+Position overlap stays in `matching.py` so it is not inside the competency domain model.
+
 ### Sample data (fictional on purpose)
 
 CVs in `sample_cvs/`:
@@ -110,7 +132,7 @@ export OPENAI_MODEL=gpt-4o-mini
 python -m pytest
 ```
 
-Expect all tests to pass (currently 18). They cover ingest, mention vs demonstration, full CV reviews, API `/run`, and CV×position evidence overlap.
+Expect all tests to pass. They cover ingest, mention vs demonstration, full CV reviews, API `/run`, CV×position overlap, and domain-layer import boundaries.
 
 ### 2. UI demo (Use Case 1)
 
