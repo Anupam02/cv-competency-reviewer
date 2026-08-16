@@ -141,6 +141,12 @@ REQUIRED_AREAS: tuple[CompetencyArea, ...] = (
             "classification",
             "regression",
         ),
+        related_tech=(
+            "pytorch",
+            "tensorflow",
+            "keras",
+            "jax",
+        ),
     ),
     CompetencyArea(
         id="ai_frameworks",
