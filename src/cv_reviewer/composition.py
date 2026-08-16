@@ -4,7 +4,7 @@ import os
 
 from cv_reviewer.application.review_cv import ReviewCvService
 from cv_reviewer.infrastructure.embeddings import build_embedder
-from cv_reviewer.infrastructure.llm_openai import OpenAiRefiner, llm_enabled
+from cv_reviewer.infrastructure.llm_openai import OpenAiRefiner, should_attach_llm
 from cv_reviewer.infrastructure.vectorstore import InMemoryVectorStore
 
 
@@ -14,8 +14,5 @@ def build_review_service(*, use_llm: bool | None = None) -> ReviewCvService:
     def index_factory() -> InMemoryVectorStore:
         return InMemoryVectorStore(embedder)
 
-    llm = None
-    enabled = llm_enabled() if use_llm is None else use_llm
-    if enabled:
-        llm = OpenAiRefiner()
+    llm = OpenAiRefiner() if should_attach_llm(use_llm) else None
     return ReviewCvService(index_factory=index_factory, llm_refiner=llm)

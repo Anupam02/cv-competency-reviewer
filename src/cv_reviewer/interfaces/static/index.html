@@ -110,7 +110,8 @@
     </div>
     <section class="panel">
       <h2>3. Run</h2>
-      <label><input id="llm" type="checkbox" /> Use LLM refinement if an API key is configured</label>
+      <label><input id="llm" type="checkbox" checked /> Use local Ollama to refine the review from retrieved excerpts</label>
+      <p id="llm-hint" class="muted">Default: <code>ollama serve</code> on this machine (<code>LLM_PROVIDER=ollama</code>). Uncheck to stay on the heuristic path.</p>
       <div>
         <button id="demo" class="secondary" type="button">Load fictional samples</button>
         <button id="run" type="button">Run assessment and recommendation</button>
@@ -122,6 +123,19 @@
   <script>
     const state = { cvs: [], positions: [] };
     const out = document.getElementById("out");
+
+    fetch("/health").then(r => r.json()).then((info) => {
+      const hint = document.getElementById("llm-hint");
+      const box = document.getElementById("llm");
+      if (!info.llm_enabled) {
+        box.checked = false;
+        hint.textContent = "LLM refinement is off (LLM_PROVIDER=none, or OpenAI with no API key). Heuristic review still runs.";
+        return;
+      }
+      box.checked = true;
+      const where = info.llm_base_url || "local";
+      hint.textContent = `LLM: ${info.llm_provider} model ${info.llm_model} at ${where}. Ollama must be running on this same machine as the app.`;
+    }).catch(() => {});
 
     function escapeHtml(value) {
       return String(value ?? "").replace(/[&<>"']/g, (ch) => ({
@@ -178,7 +192,7 @@
           const form = new FormData();
           (cvFiles.length ? cvFiles : []).forEach(f => form.append("cvs", f));
           posFiles.forEach(f => form.append("positions", f));
-          if (document.getElementById("llm").checked) form.append("use_llm", "true");
+          form.append("use_llm", document.getElementById("llm").checked ? "true" : "false");
           if (!cvFiles.length) throw new Error("PDF/DOCX CVs must be uploaded with the file picker.");
           const res = await fetch("/run-files", { method: "POST", body: form });
           if (!res.ok) throw new Error(await res.text());

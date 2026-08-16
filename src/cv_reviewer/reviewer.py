@@ -5,7 +5,7 @@ from pathlib import Path
 from cv_reviewer.composition import build_review_service
 from cv_reviewer.domain.models import CompetencyReview
 from cv_reviewer.infrastructure.ingest import ingest_bytes, ingest_path
-from cv_reviewer.infrastructure.llm_openai import llm_enabled
+from cv_reviewer.infrastructure.llm_openai import should_attach_llm
 
 
 def review_cv_file(path: str | Path, *, use_llm: bool | None = None) -> CompetencyReview:
@@ -29,7 +29,7 @@ def review_cv_text(
     filename: str | None = None,
     use_llm: bool | None = None,
 ) -> CompetencyReview:
-    enabled = llm_enabled() if use_llm is None else use_llm
+    enabled = should_attach_llm(use_llm)
     service = build_review_service(use_llm=enabled)
     return service.review_text(text, filename=filename, use_llm=enabled)
 

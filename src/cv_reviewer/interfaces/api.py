@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from cv_reviewer.domain.models import CompetencyReview
 from cv_reviewer.infrastructure.ingest import SUPPORTED_SUFFIXES, ingest_bytes
+from cv_reviewer.infrastructure.llm_openai import llm_base_url, llm_enabled, llm_model, llm_provider
 from cv_reviewer.infrastructure.samples import load_sample_library
 from cv_reviewer.matching_schema import AssessmentBundle
 from cv_reviewer.pipeline import TextDocument, run_assessment
@@ -41,7 +42,7 @@ class NamedText(BaseModel):
 class RunRequest(BaseModel):
     cvs: list[NamedText]
     positions: list[NamedText] = Field(default_factory=list)
-    use_llm: bool | None = False
+    use_llm: bool | None = None
 
 
 def _parse_llm_flag(use_llm: str | None) -> bool | None:
@@ -51,8 +52,14 @@ def _parse_llm_flag(use_llm: str | None) -> bool | None:
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health() -> dict[str, str | bool]:
+    return {
+        "status": "ok",
+        "llm_provider": llm_provider(),
+        "llm_enabled": llm_enabled(),
+        "llm_model": llm_model(),
+        "llm_base_url": llm_base_url() or "",
+    }
 
 
 @app.get("/samples")
@@ -115,7 +122,7 @@ async def run_files(
                 raise HTTPException(status_code=400, detail=f"Unsupported position type: {file.filename}")
             ingested = ingest_bytes(await file.read(), filename=file.filename or "position.txt")
             pos_docs.append(TextDocument(filename=ingested.filename, text=ingested.text))
-        return run_assessment(cv_docs, pos_docs, use_llm=_parse_llm_flag(use_llm) or False)
+        return run_assessment(cv_docs, pos_docs, use_llm=_parse_llm_flag(use_llm))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

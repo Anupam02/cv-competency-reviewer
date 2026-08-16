@@ -49,7 +49,7 @@ Position descriptions are **not** a second exercise use case. They are only ther
 | Hashed n-gram embeddings by default | Deterministic, no model download, tests run offline |
 | Optional `sentence-transformers` | Denser semantics if you set `EMBEDDING_BACKEND=sentence-transformers` |
 | Heuristic review as the main path | Mention vs demonstration is testable without an API key |
-| Optional OpenAI-compatible LLM | May refine the JSON using **retrieved excerpts only** |
+| Local Ollama by default | `LLM_PROVIDER=ollama` talks to `ollama serve` on this machine; no OpenAI key |
 | Small fictional samples | The brief says dataset size/realism is not scored |
 
 ### Architecture (Clean Architecture + DDD-lite)
@@ -68,7 +68,7 @@ composition.py       wires adapters into the use case
 | --- | --- |
 | DDD ubiquitous language | `demonstrated`, `mentioned`, `CompetencyArea`, `CompetencyReview` |
 | Bounded context | Evidence inventory only — no hiring decision in the domain |
-| Dependency inversion | `VectorIndexPort` / `LlmRefinerPort`; numpy/OpenAI stay in infrastructure |
+| Dependency inversion | `VectorIndexPort` / `LlmRefinerPort`; numpy/Ollama/OpenAI stay in infrastructure |
 | Single responsibility | Policy ≠ retrieval ≠ HTTP |
 | Open/closed | New embedder or vector DB implements the port without changing the use case |
 
@@ -114,12 +114,36 @@ python -m pip install -e ".[dev,semantic]"
 export EMBEDDING_BACKEND=sentence-transformers
 ```
 
-Optional LLM refinement:
+Local LLM refinement uses **Ollama on the same machine as the app** (this is the default):
 
 ```bash
+# in another terminal
+ollama serve
+ollama pull llama3.2
+```
+
+Copy `.env.example` to `.env` if you want to pin the model:
+
+```bash
+LLM_PROVIDER=ollama
+OLLAMA_HOST=http://127.0.0.1:11434
+OLLAMA_MODEL=llama3.2
+```
+
+The UI checkbox is on by default. If Ollama is not running, refinement is skipped and the heuristic review is still returned.
+
+Optional cloud OpenAI instead:
+
+```bash
+export LLM_PROVIDER=openai
 export OPENAI_API_KEY=...
 export OPENAI_MODEL=gpt-4o-mini
-# export OPENAI_BASE_URL=https://api.openai.com/v1
+```
+
+Heuristic-only (no LLM process):
+
+```bash
+export LLM_PROVIDER=none
 ```
 
 ---
@@ -162,6 +186,7 @@ You can also upload your own PDF/DOCX/TXT CVs and position files instead of samp
 Single CV competency review:
 
 ```bash
+python -m cv_reviewer sample_cvs/strong_ai_engineer.txt --pretty
 python -m cv_reviewer sample_cvs/strong_ai_engineer.txt --pretty --no-llm
 python -m cv_reviewer sample_cvs/keyword_only.txt --pretty --no-llm
 python -m cv_reviewer sample_cvs/sparse.txt --pretty --no-llm
@@ -175,7 +200,7 @@ python -m cv_reviewer --no-llm --pretty \
   --positions sample_positions/ai_platform_engineer.txt sample_positions/backend_services_engineer.txt sample_positions/ml_research_scientist.txt
 ```
 
-`--no-llm` keeps the run offline and deterministic.
+Omit `--no-llm` to refine with local Ollama. `--no-llm` keeps the run offline and deterministic.
 
 ### 4. API smoke checks
 
@@ -219,7 +244,7 @@ CV / position files
 - A CV is not verified employment history. Missing text is not proof of missing skill.
 - Default embeddings are lexical; paraphrases without shared tokens can be missed.
 - Position parsing works best with bullet requirements.
-- Optional LLM output can drift; the UI still shows the underlying quotes.
+- Optional LLM output can drift; the UI still shows the underlying quotes. Ollama must run on the **same host** as uvicorn — a remote agent cannot reach `ollama serve` on your laptop.
 
 ## If this were production
 
@@ -231,7 +256,7 @@ CV / position files
 ## Presentation demo script
 
 1. `python -m pytest`
-2. Start the UI, load samples, run.
+2. Start `ollama serve` and the UI, load samples, run with the Ollama checkbox on.
 3. Open Alex Rivera × AI Platform Engineer and show a **demonstrated** quote.
 4. Open Jordan Lee’s competency review and show AI skills as **mentioned only**.
 5. State clearly: the app finds evidence; it does not decide hiring.

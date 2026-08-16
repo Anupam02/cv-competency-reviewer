@@ -26,6 +26,9 @@ Requirements
 def test_health() -> None:
     res = client.get("/health")
     assert res.status_code == 200
+    body = res.json()
+    assert body["status"] == "ok"
+    assert "llm_provider" in body
 
 
 def test_samples_endpoint() -> None:

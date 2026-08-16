@@ -21,7 +21,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cvs", nargs="+", help="One or more CV files")
     parser.add_argument("--positions", nargs="+", help="One or more position description files")
     parser.add_argument("--text", help="Raw CV text instead of a file")
-    parser.add_argument("--no-llm", action="store_true", help="Skip LLM refinement even if an API key is set")
+    parser.add_argument(
+        "--no-llm",
+        action="store_true",
+        help="Skip local Ollama / OpenAI refinement and keep the heuristic review",
+    )
     parser.add_argument("--pretty", action="store_true", help="Pretty-print JSON")
     args = parser.parse_args(argv)
 
