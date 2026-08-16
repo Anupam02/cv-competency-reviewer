@@ -3,123 +3,289 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CV competency and position evidence</title>
+  <title>CV competency evidence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,520;9..144,640&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #f4f1ea;
-      --panel: #fffdf8;
-      --ink: #1d2430;
-      --muted: #5c6777;
-      --accent: #0f6e62;
-      --warn: #7a4b00;
-      --line: #d9d1c3;
-      --demo: #e7f3f0;
-      --mention: #8a5a12;
+      --bg: #eef3f1;
+      --bg-accent: #d7ebe4;
+      --ink: #12211e;
+      --muted: #5b6b66;
+      --paper: rgba(255, 252, 248, 0.92);
+      --paper-solid: #fffdf9;
+      --line: #d5e0db;
+      --accent: #0c6b5c;
+      --accent-2: #134e4a;
+      --warn: #8a4b12;
+      --warn-bg: #fff4e6;
+      --demo: #0c6b5c;
+      --mention: #b45309;
+      --missing: #64748b;
+      --ambiguous: #6d28d9;
+      --shadow: 0 18px 50px rgba(18, 33, 30, 0.08);
+      --radius: 18px;
     }
     * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
     body {
       margin: 0;
-      font-family: "Source Sans 3", "Segoe UI", sans-serif;
-      background: var(--bg);
       color: var(--ink);
-      line-height: 1.45;
+      font-family: "Source Sans 3", "Segoe UI", sans-serif;
+      line-height: 1.5;
+      background:
+        radial-gradient(900px 420px at 8% -10%, var(--bg-accent), transparent 55%),
+        radial-gradient(700px 380px at 100% 0%, #f4e7d4, transparent 46%),
+        var(--bg);
     }
-    header, main { max-width: 1100px; margin: 0 auto; padding: 20px; }
-    h1 { font-size: 1.55rem; margin: 0 0 6px; }
-    h2 { font-size: 1.15rem; margin: 0 0 10px; }
-    .banner {
-      background: #fff6e8;
-      border: 1px solid #e6d3ae;
-      padding: 10px 12px;
-      border-radius: 8px;
-      color: var(--warn);
-      margin: 12px 0 18px;
+    .shell { max-width: 1120px; margin: 0 auto; padding: 28px 20px 64px; }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.4fr 0.8fr;
+      gap: 28px;
+      align-items: end;
+      margin-bottom: 28px;
     }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    .kicker span {
+      width: 8px; height: 8px; border-radius: 99px; background: var(--accent);
+    }
+    h1 {
+      font-family: Fraunces, Georgia, serif;
+      font-size: clamp(2rem, 4vw, 3.1rem);
+      font-weight: 640;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      margin: 0 0 12px;
+    }
+    .lede { margin: 0; color: var(--muted); font-size: 1.05rem; max-width: 58ch; }
+    .hero-aside {
+      background: var(--ink);
+      color: #e8f3ef;
+      border-radius: 22px;
+      padding: 18px 20px;
+      box-shadow: var(--shadow);
+    }
+    .hero-aside p { margin: 0; font-size: 0.95rem; color: #c5d8d2; }
+    .hero-aside strong { color: #fff; display: block; margin-bottom: 6px; font-size: 0.82rem; letter-spacing: 0.08em; text-transform: uppercase; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .panel {
-      background: var(--panel);
+      background: var(--paper);
+      backdrop-filter: blur(12px);
       border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 14px;
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
     }
-    textarea, input[type=file] { width: 100%; }
+    h2 {
+      font-family: Fraunces, Georgia, serif;
+      font-size: 1.28rem;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .step {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .drop {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 86px;
+      border: 1.5px dashed #b7cdc6;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #f7fffc, #eef7f3);
+      color: var(--accent-2);
+      font-weight: 600;
+      cursor: pointer;
+      margin: 12px 0 10px;
+      text-align: center;
+      padding: 12px;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .drop:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .drop input { display: none; }
     textarea {
-      min-height: 90px;
+      width: 100%;
+      min-height: 96px;
       border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 8px;
+      border-radius: 12px;
+      padding: 10px 12px;
       font: inherit;
+      background: var(--paper-solid);
+      resize: vertical;
     }
+    textarea:focus, button:focus-visible { outline: 3px solid #9ad7cb; outline-offset: 1px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
     button {
       background: var(--accent);
       color: white;
       border: 0;
-      border-radius: 6px;
-      padding: 9px 14px;
-      font-weight: 650;
+      border-radius: 999px;
+      padding: 11px 18px;
+      font: inherit;
+      font-weight: 700;
       cursor: pointer;
-      margin-right: 8px;
-      margin-top: 8px;
     }
-    button.secondary { background: #3d4a5c; }
+    button.secondary {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    button.ghost { background: #e7eeeb; color: var(--ink); }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 16px; }
+    .tabs button { background: #e7eeeb; color: var(--ink); }
+    .tabs button.active { background: var(--ink); color: #fff; }
     .muted { color: var(--muted); font-size: 0.95rem; }
     .chip {
-      display: inline-block;
-      background: var(--demo);
+      display: inline-flex;
+      align-items: center;
+      background: #e7f4ef;
+      color: var(--accent-2);
       border-radius: 999px;
-      padding: 2px 8px;
-      margin: 2px 4px 2px 0;
-      font-size: 0.85rem;
+      padding: 3px 10px;
+      margin: 4px 6px 0 0;
+      font-size: 0.82rem;
+      font-weight: 600;
     }
-    .card { border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 8px 0; background: #fff; }
-    .level { font-weight: 700; color: var(--accent); }
-    .quote { font-size: 0.92rem; color: var(--muted); border-left: 3px solid var(--accent); padding-left: 8px; }
+    .chip-row { min-height: 28px; margin-top: 8px; }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin: 12px 0;
+      background: var(--paper-solid);
+    }
+    .level, .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      background: #e7f4ef;
+      color: var(--demo);
+    }
+    .badge.mentioned, .badge.mentioned_only { background: #fff1e0; color: var(--mention); }
+    .badge.not_found, .badge.not_demonstrated { background: #eef1f4; color: var(--missing); }
+    .badge.ambiguous, .badge.insufficient_information { background: #f3e8ff; color: var(--ambiguous); }
+    .badge.demonstrated, .badge.advanced, .badge.working, .badge.foundational { background: #e4f6f0; color: var(--demo); }
+    .quote {
+      font-size: 0.94rem;
+      color: #3f4f4b;
+      border-left: 3px solid var(--accent);
+      padding: 6px 0 6px 12px;
+      margin: 8px 0;
+      background: #f6fbf9;
+      border-radius: 0 10px 10px 0;
+    }
     table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
-    th, td { border-bottom: 1px solid var(--line); text-align: left; padding: 6px; vertical-align: top; }
-    .tabs button { background: #dfe8e5; color: var(--ink); }
-    .tabs button.active { background: var(--accent); color: #fff; }
-    details { margin-top: 6px; }
+    th { text-align: left; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 8px 8px 10px; }
+    td { border-top: 1px solid var(--line); padding: 12px 8px; vertical-align: middle; }
+    .bar { height: 7px; background: #e6eeeb; border-radius: 99px; overflow: hidden; min-width: 72px; }
+    .bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), #2a9d8f); }
+    .switch {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      cursor: pointer;
+    }
+    .switch input { margin-top: 4px; accent-color: var(--accent); width: 16px; height: 16px; }
+    details { margin-top: 8px; }
+    summary { cursor: pointer; }
+    .status {
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+    }
+    .banner {
+      background: var(--warn-bg);
+      border: 1px solid #efd3ae;
+      color: var(--warn);
+      padding: 12px 14px;
+      border-radius: 12px;
+    }
+    .comp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 860px) {
+      .hero, .grid, .comp-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Use Case 1 — AI technical competency review</h1>
-    <p class="muted">Upload CVs and optional position descriptions, then inspect demonstrated evidence. This is not a hiring or interview decision. Use Case 2 (architecture diagrams) is not in this repository.</p>
-    <div class="banner">
-      Assessments report what the CV text shows. Recommendations only order the documents you provided by demonstrated requirement overlap.
-    </div>
-  </header>
-  <main>
-    <div class="grid">
-      <section class="panel">
-        <h2>1. CVs</h2>
-        <input id="cv-files" type="file" accept=".pdf,.docx,.txt,.md" multiple />
-        <p class="muted">Or paste one CV. Demo samples can load several at once.</p>
-        <textarea id="cv-paste" placeholder="Paste a CV if you are not uploading files"></textarea>
-        <div id="cv-list" class="muted"></div>
-      </section>
-      <section class="panel">
-        <h2>2. Position descriptions</h2>
-        <input id="pos-files" type="file" accept=".pdf,.docx,.txt,.md" multiple />
-        <p class="muted">Or paste one position description.</p>
-        <textarea id="pos-paste" placeholder="Paste a position description"></textarea>
-        <div id="pos-list" class="muted"></div>
-      </section>
-    </div>
-    <section class="panel">
-      <h2>3. Run</h2>
-      <label><input id="llm" type="checkbox" checked /> Use local Ollama to refine the review from retrieved excerpts</label>
-      <p id="llm-hint" class="muted">Default: <code>ollama serve</code> on this machine (<code>LLM_PROVIDER=ollama</code>). Uncheck to stay on the heuristic path.</p>
+  <div class="shell">
+    <header class="hero">
       <div>
-        <button id="demo" class="secondary" type="button">Load sample CVs and positions</button>
-        <button id="run" type="button">Run assessment and recommendation</button>
+        <div class="kicker"><span></span> Use Case 1 · evidence inventory</div>
+        <h1>See what the CV actually demonstrates.</h1>
+        <p class="lede">Upload CVs and optional position descriptions, then inspect quotes behind each competency. This is not a hiring or interview decision.</p>
       </div>
-      <p class="muted">Includes three fictional CVs plus positions, and the public BMC Project Architect JD for local testing. Upload your own CV in the file picker if it is not already in the list.</p>
-    </section>
-    <div id="out"></div>
-  </main>
+      <aside class="hero-aside">
+        <strong>How to read it</strong>
+        <p>Recommendations only order the files you provided by demonstrated requirement overlap. Missing text is not proof of a missing skill.</p>
+      </aside>
+    </header>
+
+    <main>
+      <div class="grid">
+        <section class="panel">
+          <div class="step">Step 1</div>
+          <h2>CVs</h2>
+          <p class="muted">PDF, DOCX, TXT, or MD. You can also paste one CV below.</p>
+          <label class="drop">Choose CV files
+            <input id="cv-files" type="file" accept=".pdf,.docx,.txt,.md" multiple />
+          </label>
+          <textarea id="cv-paste" placeholder="Paste a CV if you are not uploading files"></textarea>
+          <div id="cv-list" class="chip-row muted"></div>
+        </section>
+        <section class="panel">
+          <div class="step">Step 2</div>
+          <h2>Position descriptions</h2>
+          <p class="muted">Optional. Includes the BMC Project Architect JD when you load samples.</p>
+          <label class="drop">Choose position files
+            <input id="pos-files" type="file" accept=".pdf,.docx,.txt,.md" multiple />
+          </label>
+          <textarea id="pos-paste" placeholder="Paste a position description"></textarea>
+          <div id="pos-list" class="chip-row muted"></div>
+        </section>
+      </div>
+
+      <section class="panel">
+        <div class="step">Step 3</div>
+        <h2>Run the assessment</h2>
+        <label class="switch">
+          <input id="llm" type="checkbox" checked />
+          <span>
+            Use local Ollama to refine the review from retrieved excerpts
+            <div id="llm-hint" class="muted">Default: <code>ollama serve</code> on this machine. Uncheck to stay on the heuristic path.</div>
+          </span>
+        </label>
+        <div class="actions">
+          <button id="demo" class="secondary" type="button">Load sample CVs and positions</button>
+          <button id="run" type="button">Run assessment</button>
+        </div>
+        <p class="muted" style="margin: 12px 0 0;">Samples include three fictional CVs, three fictional roles, and the public BMC Project Architect JD. If you pick a resume in the CV files control, that file is assessed instead of the fictional CVs.</p>
+      </section>
+      <div id="out"></div>
+    </main>
+  </div>
   <script>
     const state = { cvs: [], positions: [] };
     const out = document.getElementById("out");
@@ -141,6 +307,11 @@
       return String(value ?? "").replace(/[&<>"']/g, (ch) => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
       }[ch]));
+    }
+
+    function badge(label) {
+      const cls = String(label || "").toLowerCase().replace(/\s+/g, "_");
+      return `<span class="badge ${escapeHtml(cls)}">${escapeHtml(label)}</span>`;
     }
 
     function renderLists() {
@@ -166,7 +337,7 @@
     });
 
     document.getElementById("demo").onclick = async () => {
-      out.innerHTML = "<p class='muted'>Loading samples…</p>";
+      out.innerHTML = "<p class='status muted'>Loading samples…</p>";
       const res = await fetch("/samples");
       const data = await res.json();
       state.cvs = data.cvs.map(d => ({ filename: d.filename, text: d.text }));
@@ -174,7 +345,7 @@
       document.getElementById("cv-paste").value = "";
       document.getElementById("pos-paste").value = "";
       renderLists();
-      out.innerHTML = `<p class='muted'>Loaded ${state.cvs.length} CV(s) and ${state.positions.length} position(s), including the BMC Project Architect JD. Upload your resume in the CV picker if it is not already listed, then click run.</p>`;
+      out.innerHTML = `<p class="status muted">Loaded ${state.cvs.length} CV(s) and ${state.positions.length} position(s), including the BMC Project Architect JD. Upload your resume in the CV picker if it is not already listed, then click run.</p>`;
     };
 
     document.getElementById("run").onclick = async () => {
@@ -185,7 +356,7 @@
       const binary = (f) => /\.(pdf|docx)$/i.test(f.name);
       const hasBinary = cvFiles.some(binary) || posFiles.some(binary);
 
-      out.innerHTML = "<p class='muted'>Running retrieval and assessments…</p>";
+      out.innerHTML = "<p class='status muted'>Running retrieval and assessments…</p>";
       try {
         let data;
         if (hasBinary) {
@@ -235,6 +406,8 @@
     function renderResults(data) {
       out.innerHTML = `
         <section class="panel">
+          <div class="step">Results</div>
+          <h2>Evidence review</h2>
           <p class="muted">${escapeHtml(data.note)}</p>
           <div class="tabs">
             <button type="button" data-tab="table" class="active">Evidence table</button>
@@ -266,12 +439,15 @@
       }
       const rows = data.alignments.map(a => `
         <tr>
-          <td>${escapeHtml(a.cv_label)}</td>
+          <td><strong>${escapeHtml(a.cv_label)}</strong></td>
           <td>${escapeHtml(a.position_title)}</td>
           <td>${a.demonstrated_requirements}</td>
           <td>${a.mentioned_requirements}</td>
           <td>${a.missing_requirements}</td>
-          <td>${a.coverage_ratio}</td>
+          <td>
+            <div class="bar" title="${a.coverage_ratio}"><i style="width:${Math.round((a.coverage_ratio || 0) * 100)}%"></i></div>
+            <div class="muted">${a.coverage_ratio}</div>
+          </td>
         </tr>
       `).join("");
       const details = data.alignments.map(a => `
@@ -280,19 +456,19 @@
           <p class="muted">${escapeHtml(a.summary)}</p>
           ${a.requirements.map(r => `
             <details>
-              <summary><span class="level">${escapeHtml(r.coverage)}</span> — ${escapeHtml(r.requirement)}</summary>
+              <summary>${badge(r.coverage)} ${escapeHtml(r.requirement)}</summary>
               <p>${escapeHtml(r.notes)}</p>
-              ${(r.evidence || []).map(e => `<p class="quote"><em>${escapeHtml(e.evidence_type)}</em> · ${escapeHtml(e.source_section)}<br/>${escapeHtml(e.quote)}</p>`).join("") || "<p class='muted'>No excerpt.</p>"}
+              ${(r.evidence || []).map(e => `<p class="quote">${badge(e.evidence_type)} · ${escapeHtml(e.source_section)}<br/>${escapeHtml(e.quote)}</p>`).join("") || "<p class='muted'>No excerpt.</p>"}
             </details>
           `).join("")}
         </div>
       `).join("");
       return `
         <table>
-          <thead><tr><th>CV</th><th>Position</th><th>Demonstrated</th><th>Mentioned only</th><th>Not found</th><th>Coverage ratio</th></tr></thead>
+          <thead><tr><th>CV</th><th>Position</th><th>Demonstrated</th><th>Mentioned only</th><th>Not found</th><th>Coverage</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
-        <p class="muted">Coverage ratio is demonstrated requirements divided by total requirements. It is not a hiring score.</p>
+        <p class="muted">Coverage is demonstrated requirements divided by total requirements. It is not a hiring score.</p>
         ${details}
       `;
     }
@@ -321,14 +497,16 @@
         <div class="card">
           <h2>${escapeHtml(review.candidate_name || review.source_filename || "CV")}</h2>
           <p class="muted">${escapeHtml(review.disclaimer)}</p>
+          <div class="comp-grid">
           ${review.competencies.map(c => `
             <div class="card">
-              <div><strong>${escapeHtml(c.area)}</strong> — <span class="level">${escapeHtml(c.apparent_level)}</span></div>
+              <div><strong>${escapeHtml(c.area)}</strong> ${badge(c.apparent_level)}</div>
               <div class="muted">demonstrated: ${c.demonstrated} · mentioned without evidence: ${c.mentioned_without_evidence}</div>
               <p>${escapeHtml(c.assessment_notes)}</p>
-              ${(c.evidence || []).map(e => `<p class="quote"><em>${escapeHtml(e.evidence_type)}</em> · ${escapeHtml(e.source_section)}<br/>${escapeHtml(e.quote)}</p>`).join("")}
+              ${(c.evidence || []).map(e => `<p class="quote">${badge(e.evidence_type)} · ${escapeHtml(e.source_section)}<br/>${escapeHtml(e.quote)}</p>`).join("")}
             </div>
           `).join("")}
+          </div>
           <p><strong>Not demonstrated:</strong> ${escapeHtml((review.skills_not_demonstrated || []).join(", ") || "None listed")}</p>
           <p><strong>Insufficient information:</strong> ${escapeHtml((review.insufficient_information || []).join(", ") || "None listed")}</p>
         </div>
