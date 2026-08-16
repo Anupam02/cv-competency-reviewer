@@ -243,6 +243,32 @@ CV / position files
 
 ---
 
+## Ollama, guardrails, and evaluation
+
+Ollama is **optional**. Default `LLM_PROVIDER=ollama` talks to `ollama serve` on this machine and may rewrite the JSON using **retrieved excerpts only**. The heuristic review always runs first. If Ollama is down, refinement is skipped.
+
+Why Ollama: you already run it locally, so refinement does not need a cloud API key or to send CVs to a third party. Uncheck the UI box or pass `--no-llm` for a deterministic run.
+
+Guardrails already in the pipeline:
+
+| Guardrail | What it does |
+| --- | --- |
+| Prompt policy | The LLM is told not to hire/reject/interview and not to invent experience |
+| Excerpt-only refine | The model sees retrieved chunks plus the heuristic JSON, not the raw full CV as a blank prompt |
+| Decision-language strip | Hire/reject/interview wording is redacted from the structured output |
+| Quote grounding | Quotes that are not a substring of the CV text are dropped |
+
+Evaluation matrix (fictional samples × 9 competency areas):
+
+```bash
+python -m cv_reviewer.evaluation
+python -m pytest tests/test_eval_matrix.py
+```
+
+Gold labels live in `src/cv_reviewer/evaluation/matrix.py`. Coarse classes are `demonstrated` / `mentioned_only` / `insufficient_information` / `not_demonstrated` (advanced/working/foundational all count as demonstrated). Extend the dict when you add labelled CVs; do not use a real hiring outcome as a gold label.
+
+---
+
 ## Limitations
 
 - A CV is not verified employment history. Missing text is not proof of missing skill.
@@ -253,7 +279,7 @@ CV / position files
 ## If this were production
 
 - Persistent vector store, auth, and audit logs
-- A labelled mention-vs-demonstration evaluation set
+- A larger labelled mention-vs-demonstration set than the three fictional samples
 - Human review before any HR use
 - Better PDF layout extraction and tracing of every retrieval
 
