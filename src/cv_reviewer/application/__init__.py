@@ -1,15 +1,15 @@
+from cv_reviewer.domain.chunking import Chunk
 from cv_reviewer.domain.evidence_policy import (
     classify_evidence_type,
     find_additional_technologies,
     keyword_hits,
     relevant_chunks,
 )
-from cv_reviewer.application.ports import retrieve_for_area
 
 __all__ = [
+    "Chunk",
     "classify_evidence_type",
     "find_additional_technologies",
     "keyword_hits",
     "relevant_chunks",
-    "retrieve_for_area",
 ]
