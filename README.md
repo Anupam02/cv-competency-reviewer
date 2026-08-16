@@ -84,9 +84,12 @@ CVs in `sample_cvs/`:
 
 Positions in `sample_positions/`:
 
-- AI Platform Engineer
-- Backend Services Engineer
-- Applied ML Research Scientist
+- AI Platform Engineer (fictional)
+- Backend Services Engineer (fictional)
+- Applied ML Research Scientist (fictional)
+- `bmc_project_architect_consulting_india.txt` — public BMC **Project Architect / Lead AI Architect** JD ([job 47275](https://jobs.bmc.com/Careers/JobDetail/Project-Architect-Consulting-Services-India/47275)), kept as bullets so you can upload your own CV and compare evidence
+
+To test against your resume: put the file in `sample_cvs/` (or upload it in the UI), click **Load sample CVs and positions**, then **Run**.
 
 ---
 
@@ -166,12 +169,13 @@ python -m uvicorn cv_reviewer.api:app --port 8000
 
 Open http://127.0.0.1:8000
 
-1. Click **Load fictional samples**.
-2. Click **Run assessment and recommendation**.
-3. **Evidence table** — CV × position counts (demonstrated / mentioned only / not found).
-4. Expand a row — quotes from the CV.
-5. **Competency reviews** — the nine AI areas with levels and evidence.
-6. **Recommendations** — order of uploaded documents by demonstrated overlap only.
+1. Click **Load sample CVs and positions** (includes the BMC Project Architect JD).
+2. Optionally upload **your** CV in the CV file picker (PDF/DOCX/TXT). If the picker has a file, that run uses it instead of the fictional CVs.
+3. Click **Run assessment and recommendation**.
+4. **Evidence table** — CV × position counts (demonstrated / mentioned only / not found). Open the BMC row for your CV.
+5. Expand a row — quotes from the CV.
+6. **Competency reviews** — the nine AI areas with levels and evidence.
+7. **Recommendations** — order of uploaded documents by demonstrated overlap only.
 
 What you should see on the samples:
 
@@ -179,7 +183,7 @@ What you should see on the samples:
 - **Jordan Lee** (keyword CV) vs AI role: AI terms **mentioned only**; vs **Backend Services Engineer**: Java REST/SQL work can show **demonstrated** evidence.
 - **Sam Patel** (sparse CV): AI areas **not demonstrated**; position requirements mostly **not found**.
 
-You can also upload your own PDF/DOCX/TXT CVs and position files instead of samples.
+You can also upload your own PDF/DOCX/TXT CVs and position files instead of samples. For the BMC JD, drop your resume in `sample_cvs/` or use the CV file picker after loading samples.
 
 ### 3. CLI
 

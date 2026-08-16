@@ -113,10 +113,10 @@
       <label><input id="llm" type="checkbox" checked /> Use local Ollama to refine the review from retrieved excerpts</label>
       <p id="llm-hint" class="muted">Default: <code>ollama serve</code> on this machine (<code>LLM_PROVIDER=ollama</code>). Uncheck to stay on the heuristic path.</p>
       <div>
-        <button id="demo" class="secondary" type="button">Load fictional samples</button>
+        <button id="demo" class="secondary" type="button">Load sample CVs and positions</button>
         <button id="run" type="button">Run assessment and recommendation</button>
       </div>
-      <p class="muted">Samples are small and fictional on purpose. The dataset is only for demonstrating the workflow.</p>
+      <p class="muted">Includes three fictional CVs plus positions, and the public BMC Project Architect JD for local testing. Upload your own CV in the file picker if it is not already in the list.</p>
     </section>
     <div id="out"></div>
   </main>
@@ -174,7 +174,7 @@
       document.getElementById("cv-paste").value = "";
       document.getElementById("pos-paste").value = "";
       renderLists();
-      out.innerHTML = "<p class='muted'>Loaded 3 fictional CVs and 3 fictional positions. Click run.</p>";
+      out.innerHTML = `<p class='muted'>Loaded ${state.cvs.length} CV(s) and ${state.positions.length} position(s), including the BMC Project Architect JD. Upload your resume in the CV picker if it is not already listed, then click run.</p>`;
     };
 
     document.getElementById("run").onclick = async () => {
