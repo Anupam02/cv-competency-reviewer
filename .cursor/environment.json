@@ -1,0 +1,18 @@
+{
+  "name": "CV Competency Reviewer",
+  "user": "ubuntu",
+  "install": "python3 -m pip install --upgrade 'pip>=24.2' && python3 -m pip install -r requirements.txt",
+  "start": "bash .cursor/start.sh",
+  "terminals": [
+    {
+      "name": "api",
+      "command": "export PATH=\"$HOME/.local/bin:$PATH\" && export LLM_PROVIDER=none && python3 -m uvicorn cv_reviewer.api:app --host 0.0.0.0 --port 8000"
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 8000
+    }
+  ]
+}
