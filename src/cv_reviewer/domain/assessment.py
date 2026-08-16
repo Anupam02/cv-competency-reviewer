@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from cv_reviewer.domain.chunking import Chunk
-from cv_reviewer.domain.evidence_policy import classify_evidence_type, keyword_hits, relevant_chunks
+from cv_reviewer.domain.evidence_policy import classify_evidence_type, keyword_hits, passages_for_area
 from cv_reviewer.domain.models import (
     AdditionalTechnology,
     CompetenceLevel,
@@ -19,22 +19,22 @@ def heuristic_review(
     extra_tech: dict[str, list[Chunk]],
     candidate_name: str | None,
     filename: str | None,
+    chunks: list[Chunk] | None = None,
 ) -> CompetencyReview:
     competencies: list[CompetencyAssessment] = []
     not_demonstrated: list[str] = []
     insufficient: list[str] = []
 
     for area in REQUIRED_AREAS:
-        scored = relevant_chunks(retrieved.get(area.id, []), area)
+        scored = passages_for_area(retrieved.get(area.id, []), chunks or [], area)
         assessment = _assess_area(area, scored)
         competencies.append(assessment)
         if assessment.apparent_level == "not_demonstrated":
             not_demonstrated.append(area.name)
-        elif assessment.apparent_level in {"insufficient_information", "mentioned_only"}:
-            if assessment.apparent_level == "insufficient_information":
-                insufficient.append(area.name)
-            if not assessment.demonstrated:
-                not_demonstrated.append(area.name)
+        elif assessment.apparent_level == "mentioned_only":
+            not_demonstrated.append(area.name)
+        elif assessment.apparent_level == "insufficient_information":
+            insufficient.append(area.name)
 
     additional: list[AdditionalTechnology] = []
     for name, tech_chunks in sorted(extra_tech.items()):
@@ -84,6 +84,7 @@ def _assess_area(area: CompetencyArea, scored: list) -> CompetencyAssessment:
     evidence: list[EvidenceItem] = []
     demonstrated = False
     mentioned = False
+    ambiguous = False
     for item in scored:
         hits = keyword_hits(item.chunk.text, area.keywords + area.related_tech)
         if not hits:
@@ -91,8 +92,10 @@ def _assess_area(area: CompetencyArea, scored: list) -> CompetencyAssessment:
         etype = classify_evidence_type(item.chunk, hits)
         if etype == "demonstrated":
             demonstrated = True
-        else:
+        elif etype == "mentioned":
             mentioned = True
+        else:
+            ambiguous = True
         evidence.append(
             EvidenceItem(
                 quote=_trim(item.chunk.text),
@@ -102,7 +105,12 @@ def _assess_area(area: CompetencyArea, scored: list) -> CompetencyAssessment:
             )
         )
 
-    level = _level(demonstrated=demonstrated, mentioned=mentioned, evidence=evidence)
+    level = _level(
+        demonstrated=demonstrated,
+        mentioned=mentioned,
+        ambiguous=ambiguous,
+        evidence=evidence,
+    )
     return CompetencyAssessment(
         area=area.name,
         apparent_level=level,
@@ -113,7 +121,13 @@ def _assess_area(area: CompetencyArea, scored: list) -> CompetencyAssessment:
     )
 
 
-def _level(*, demonstrated: bool, mentioned: bool, evidence: list[EvidenceItem]) -> CompetenceLevel:
+def _level(
+    *,
+    demonstrated: bool,
+    mentioned: bool,
+    ambiguous: bool,
+    evidence: list[EvidenceItem],
+) -> CompetenceLevel:
     if demonstrated:
         demo = [e for e in evidence if e.evidence_type == "demonstrated"]
         joined = " ".join(e.quote.lower() for e in demo)
@@ -134,9 +148,9 @@ def _level(*, demonstrated: bool, mentioned: bool, evidence: list[EvidenceItem])
         return "foundational"
     if mentioned:
         return "mentioned_only"
-    if not evidence:
-        return "not_demonstrated"
-    return "insufficient_information"
+    if ambiguous or evidence:
+        return "insufficient_information"
+    return "not_demonstrated"
 
 
 def _notes(area: CompetencyArea, level: CompetenceLevel, evidence: list[EvidenceItem]) -> str:
@@ -169,6 +183,11 @@ def _rationale(etype: str, hits: list[str], section: str, score: float) -> str:
         return (
             f"Excerpt is from '{section}' and describes activity involving {hit_text} "
             f"(retrieval score {score:.2f})."
+        )
+    if etype == "ambiguous":
+        return (
+            f"Excerpt from '{section}' only incidentally refers to {hit_text}; "
+            f"too thin to assess competence (retrieval score {score:.2f})."
         )
     return (
         f"Excerpt names {hit_text} in '{section}' without a clear activity or outcome "

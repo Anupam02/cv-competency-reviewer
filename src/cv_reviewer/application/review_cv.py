@@ -40,6 +40,7 @@ class ReviewCvService:
             extra_tech=extra,
             candidate_name=guess_name(text),
             filename=filename,
+            chunks=chunks,
         )
         if use_llm and self._llm_refiner is not None:
             pack = _excerpt_pack(retrieved)

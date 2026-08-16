@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-EvidenceType = Literal["demonstrated", "mentioned"]
+EvidenceType = Literal["demonstrated", "mentioned", "ambiguous"]
 CompetenceLevel = Literal[
     "advanced",
     "working",
@@ -27,7 +27,8 @@ class EvidenceItem(BaseModel):
     evidence_type: EvidenceType = Field(
         description=(
             "demonstrated = used in work, projects, or outcomes; "
-            "mentioned = listed or named without supporting activity."
+            "mentioned = listed or named without supporting activity; "
+            "ambiguous = too thin or incidental to assess reliably."
         )
     )
     rationale: str = Field(description="Why this excerpt is classified this way.")

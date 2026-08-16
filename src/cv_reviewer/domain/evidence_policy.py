@@ -55,6 +55,21 @@ WEAK_MARKERS = (
     "awareness of",
 )
 
+AMBIGUOUS_MARKERS = (
+    "briefly",
+    "touched",
+    "pairing",
+    "paired on",
+    "helped with",
+    "shadowed",
+    "once used",
+    "one-off",
+    "introductory",
+    "intro to",
+    "minor involvement",
+    "while pairing",
+)
+
 
 def keyword_hits(text: str, keywords: tuple[str, ...]) -> list[str]:
     lowered = text.lower()
@@ -62,7 +77,7 @@ def keyword_hits(text: str, keywords: tuple[str, ...]) -> list[str]:
 
 
 def classify_evidence_type(chunk: Chunk, matched_keywords: list[str]) -> str:
-    """Domain policy: skills lists are mentions; activity in work/projects is demonstration."""
+    """Domain policy: demonstrated, mentioned, or too thin to assess (ambiguous)."""
     section = chunk.section.lower()
     body = chunk.text.lower()
     if any(marker in body for marker in WEAK_MARKERS):
@@ -71,6 +86,8 @@ def classify_evidence_type(chunk: Chunk, matched_keywords: list[str]) -> str:
         if any(verb in body for verb in ACTION_VERBS):
             return "demonstrated"
         return "mentioned"
+    if any(marker in body for marker in AMBIGUOUS_MARKERS):
+        return "ambiguous"
     if any(verb in body for verb in ACTION_VERBS):
         return "demonstrated"
     if section in {
@@ -82,9 +99,11 @@ def classify_evidence_type(chunk: Chunk, matched_keywords: list[str]) -> str:
         "selected projects",
         "research",
         "publications",
-    }:
-        if matched_keywords and len(chunk.text) > 80:
-            return "demonstrated"
+    } and matched_keywords:
+        # A passing job-line reference without activity verbs is not enough to assess.
+        return "ambiguous"
+    if matched_keywords and len(" ".join(chunk.text.split())) < 80:
+        return "ambiguous"
     return "mentioned"
 
 
@@ -95,6 +114,30 @@ def relevant_chunks(scored: list, area: CompetencyArea) -> list:
         if hits:
             kept.append(item)
     return kept
+
+
+class _LexicalScored:
+    def __init__(self, chunk: Chunk, score: float = 0.0) -> None:
+        self.chunk = chunk
+        self.score = score
+
+
+def passages_for_area(retrieved: list, chunks: list[Chunk], area: CompetencyArea) -> list:
+    """Use retrieved hits plus any other chunk that names the area.
+
+    Retrieval alone can miss a one-line passing reference; treating that as
+    not_demonstrated is overconfident.
+    """
+    scored = list(relevant_chunks(retrieved, area))
+    seen = {item.chunk.index for item in scored}
+    for chunk in chunks:
+        if chunk.index in seen:
+            continue
+        hits = keyword_hits(chunk.text, area.keywords + area.related_tech)
+        if hits:
+            scored.append(_LexicalScored(chunk))
+            seen.add(chunk.index)
+    return scored
 
 
 def find_additional_technologies(chunks: list[Chunk]) -> dict[str, list[Chunk]]:
