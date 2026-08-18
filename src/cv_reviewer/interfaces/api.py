@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from cv_reviewer.domain.models import CompetencyReview
 from cv_reviewer.infrastructure.ingest import SUPPORTED_SUFFIXES, ingest_bytes
 from cv_reviewer.infrastructure.llm_openai import llm_base_url, llm_enabled, llm_model, llm_provider
-from cv_reviewer.infrastructure.samples import load_sample_library
+from cv_reviewer.infrastructure.samples import SampleLibrary, load_sample_library
 from cv_reviewer.matching_schema import AssessmentBundle
 from cv_reviewer.pipeline import TextDocument, run_assessment
 from cv_reviewer.reviewer import review_cv_bytes, review_cv_text
@@ -55,6 +55,7 @@ def _parse_llm_flag(use_llm: str | None) -> bool | None:
 def health() -> dict[str, str | bool]:
     return {
         "status": "ok",
+        "app": "cv-competency-reviewer",
         "llm_provider": llm_provider(),
         "llm_enabled": llm_enabled(),
         "llm_model": llm_model(),
@@ -63,8 +64,14 @@ def health() -> dict[str, str | bool]:
 
 
 @app.get("/samples")
-def samples() -> dict:
-    return load_sample_library()
+def samples() -> SampleLibrary:
+    library = load_sample_library()
+    if not library.cvs:
+        raise HTTPException(
+            status_code=500,
+            detail=f"No sample CVs found in {library.cv_source or 'sample_cvs'}.",
+        )
+    return library
 
 
 @app.post("/review", response_model=CompetencyReview)

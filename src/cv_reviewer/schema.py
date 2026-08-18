@@ -6,6 +6,11 @@ from cv_reviewer.domain.models import (
     DISCLAIMER,
     EvidenceItem,
     EvidenceType,
+    ChunkTrace,
+    ClassificationEvent,
+    PipelineTrace,
+    RetrievalEvent,
+    TraceStep,
 )
 
 __all__ = [
@@ -16,4 +21,9 @@ __all__ = [
     "DISCLAIMER",
     "EvidenceItem",
     "EvidenceType",
+    "ChunkTrace",
+    "ClassificationEvent",
+    "PipelineTrace",
+    "RetrievalEvent",
+    "TraceStep",
 ]

@@ -1,10 +1,68 @@
-# AI Technical Competency Review (Use Case 1)
+# AI Technical Competency Review
 
-This repository implements **Use Case 1 only** from the AI Engineer Technical Exercise: review a candidate CV for **demonstrated AI technical competence**.
+This repository reviews a candidate CV for **demonstrated AI technical competence**. It inventories evidence. It does **not** make a hiring, pass/fail, interview, ranking-for-employment, or offer decision.
 
-**Use Case 2** (architecture diagram generation from technical notes) is out of scope here and will live in a separate repository.
+---
 
-The system inventories evidence. It does **not** make a hiring, pass/fail, interview, ranking-for-employment, or offer decision.
+## Quick start
+
+Python 3.11+. This repo is the CV competency reviewer only.
+
+```bash
+git fetch origin
+git checkout cursor/uc1-traceability-16a6
+git pull origin cursor/uc1-traceability-16a6
+
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+
+python -m pip install --upgrade "pip>=24.2"
+python -m pip install -r requirements.txt
+```
+
+That install already includes FastAPI, uvicorn, PDF/DOCX ingest, numpy, the OpenAI-compatible client (used for **local Ollama**), and pytest. You do **not** need Datadog or an extra tracing package.
+
+Optional: local LLM (separate install, not pip):
+
+```bash
+# other terminal
+ollama serve
+ollama pull llama3.2
+```
+
+Copy `.env.example` to `.env` if your model tag is not `llama3.2`.
+
+Run tests, then the UI:
+
+```bash
+python -m pytest
+python -m uvicorn cv_reviewer.api:app --port 8000
+```
+
+Open http://127.0.0.1:8000 → **Load sample CVs and positions** → upload your resume if you want → **Run assessment** → open **Trace**.
+
+CLI:
+
+```bash
+python -m cv_reviewer --pretty --no-llm \
+  --cvs sample_cvs/strong_ai_engineer.txt \
+  --positions sample_positions/bmc_project_architect_consulting_india.txt
+```
+
+Omit `--no-llm` when `ollama serve` is running.
+
+If http://127.0.0.1:8000 shows an architecture-diagram page (paste technical notes, Generate diagram), that process is **not** this app. Something else is bound to port 8000 (usually `archdiag.api:app`). Stop it, then start the reviewer:
+
+```bash
+# macOS/Linux: see what owns 8000
+lsof -i :8000
+kill <PID>
+
+curl -s http://127.0.0.1:8000/health
+# must include: "app": "cv-competency-reviewer"
+```
+
+You must run `python -m uvicorn cv_reviewer.api:app --port 8000` from **cv-competency-reviewer**, not from an architecture-diagram folder. Then hard-refresh the browser (Cmd+Shift+R / Ctrl+Shift+R).
 
 ---
 
@@ -243,6 +301,23 @@ CV / position files
 
 ---
 
+## Traceability, Ollama, guardrails, and evaluation
+
+There is **no Datadog agent**. Datadog is commercial SaaS. Every review has an in-app **Trace** tab: chunk → retrieve → classify → optional LLM → guardrail (decision-language strip + quote grounding).
+
+Ollama is **optional**. Default `LLM_PROVIDER=ollama` talks to `ollama serve` on this machine. The heuristic review always runs first. If Ollama is down, refinement is skipped.
+
+```bash
+python -m cv_reviewer.evaluation
+```
+
+Gold labels: `src/cv_reviewer/evaluation/matrix.py`. Do not gold-label a hiring outcome.
+
+If you later want vendor-style APM: OpenTelemetry → Jaeger/Grafana Tempo. For LLM spans: Langfuse or Arize Phoenix.
+
+
+---
+
 ## Limitations
 
 - A CV is not verified employment history. Missing text is not proof of missing skill.
@@ -253,14 +328,15 @@ CV / position files
 ## If this were production
 
 - Persistent vector store, auth, and audit logs
-- A labelled mention-vs-demonstration evaluation set
+- A larger labelled mention-vs-demonstration set than the three fictional samples
 - Human review before any HR use
-- Better PDF layout extraction and tracing of every retrieval
+- Better PDF layout extraction; optional OpenTelemetry export of the in-app traces
 
 ## Presentation demo script
 
 1. `python -m pytest`
 2. Start `ollama serve` and the UI, load samples, run with the Ollama checkbox on.
 3. Open Alex Rivera × AI Platform Engineer and show a **demonstrated** quote.
-4. Open Jordan Lee’s competency review and show AI skills as **mentioned only**.
-5. State clearly: the app finds evidence; it does not decide hiring.
+4. Open the **Trace** tab and walk the chunk → retrieve → classify steps.
+5. Open Jordan Lee’s competency review and show AI skills as **mentioned only**.
+6. State clearly: the app finds evidence; it does not decide hiring.

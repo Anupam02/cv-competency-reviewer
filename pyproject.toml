@@ -38,7 +38,7 @@ cv-review = "cv_reviewer.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-cv_reviewer = ["interfaces/static/*"]
+cv_reviewer = ["interfaces/static/*", "data/sample_cvs/*", "data/sample_positions/*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

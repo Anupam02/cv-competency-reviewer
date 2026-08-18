@@ -1,0 +1,36 @@
+Position: Project Architect - Consulting Services - India (BMC)
+Source: https://jobs.bmc.com/Careers/JobDetail/Project-Architect-Consulting-Services-India/47275
+Job ID: 47275
+Location: Bangalore / Pune, India (hybrid)
+Posted: 13-Jul-2026
+
+Public BMC job posting used for local testing. Compensation, benefits, and equal-opportunity boilerplate are omitted so requirement matching stays on the technical work.
+
+Summary
+BMC is hiring an experienced AI Architect to lead design and development of a strategic enterprise AI platform for Professional Services: discovering, reusing, and generating high-value delivery assets. Hands-on technical leadership for someone who has built and delivered enterprise AI platforms, not only prototypes. The platform combines Retrieval-Augmented Generation (RAG), agentic AI workflows, enterprise integrations, multimodal intelligence, and governance.
+
+Requirements
+- Design, build, and maintain application architecture across backend services, ingestion pipelines, AI orchestration, retrieval layers, and user-facing capabilities
+- 10+ years of software engineering experience designing and building enterprise-scale applications
+- Proven experience designing and delivering enterprise AI platforms or AI-enabled products from concept through production
+- Strong hands-on Python for production-grade backend services
+- Strong experience with PostgreSQL including schema design, performance optimization, and operational reliability
+- Hands-on experience with Large Language Models including model integration, prompt engineering, grounding techniques, and response optimization
+- Experience with embeddings and semantic search for enterprise AI applications
+- Strong understanding of OAuth, OIDC, JWT, and enterprise authentication
+- Translate business requirements into scalable AI architecture and technical solutions
+- Create agentic workflows using tool-calling, ReAct-style reasoning, structured prompts, workflow orchestration, and human review checkpoints
+- Integrate enterprise identity and access controls including OAuth/OIDC, JWT validation, claims and role mapping, SSO, and Beyond Identity or equivalent
+- Support multimodal use cases including screenshot and image analysis, vision model calls, and AI-assisted troubleshooting
+- Bachelor's or Master's degree in Computer Science, Artificial Intelligence, Software Engineering, or a related technical discipline
+- Stakeholder management and communication across Engineering, Product, Professional Services, and Enterprise Architecture
+
+Nice to have
+- Design and implement Retrieval-Augmented Generation (RAG) solutions
+- Vector search technologies such as pgvector or other enterprise vector databases
+- Developing and consuming REST APIs
+- Integrating enterprise platforms using Microsoft Graph APIs and SharePoint
+- Workflow orchestration and agentic AI frameworks
+- AI observability, governance, monitoring, and cost optimization
+- Calling LLM APIs from Python including model selection, structured outputs, error handling, retries, token management, and cost awareness
+- Agentic AI patterns including ReAct, tool calling, function calling, workflow orchestration, and human-in-the-loop controls

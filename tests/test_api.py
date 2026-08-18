@@ -28,7 +28,20 @@ def test_health() -> None:
     assert res.status_code == 200
     body = res.json()
     assert body["status"] == "ok"
+    assert body["app"] == "cv-competency-reviewer"
     assert "llm_provider" in body
+
+
+def test_ui_exposes_sample_select_and_file_input() -> None:
+    res = client.get("/")
+    assert res.status_code == 200
+    html = res.text
+    assert 'id="cv-sample"' in html
+    assert 'id="pos-sample"' in html
+    assert 'id="cv-files"' in html
+    assert 'id="pos-files"' in html
+    assert 'for="cv-files"' in html
+    assert "This file is queued for Run." in html
 
 
 def test_samples_endpoint() -> None:
@@ -37,6 +50,9 @@ def test_samples_endpoint() -> None:
     body = res.json()
     assert len(body["cvs"]) >= 3
     assert len(body["positions"]) >= 4
+    assert body["cvs"][0]["filename"].endswith(".txt")
+    assert "Alex" in body["cvs"][0]["text"] or "Jordan" in "".join(c["text"] for c in body["cvs"]) or "Sam" in "".join(c["text"] for c in body["cvs"])
+    assert body["cv_source"]
 
 
 def test_review_text_endpoint() -> None:
