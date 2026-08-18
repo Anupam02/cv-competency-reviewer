@@ -55,6 +55,7 @@ def _parse_llm_flag(use_llm: str | None) -> bool | None:
 def health() -> dict[str, str | bool]:
     return {
         "status": "ok",
+        "app": "cv-competency-reviewer",
         "llm_provider": llm_provider(),
         "llm_enabled": llm_enabled(),
         "llm_model": llm_model(),

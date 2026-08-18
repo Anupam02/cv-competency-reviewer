@@ -28,6 +28,7 @@ def test_health() -> None:
     assert res.status_code == 200
     body = res.json()
     assert body["status"] == "ok"
+    assert body["app"] == "cv-competency-reviewer"
     assert "llm_provider" in body
 
 

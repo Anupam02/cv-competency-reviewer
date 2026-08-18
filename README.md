@@ -51,6 +51,19 @@ python -m cv_reviewer --pretty --no-llm \
 
 Omit `--no-llm` when `ollama serve` is running.
 
+If http://127.0.0.1:8000 shows an architecture-diagram page (paste technical notes, Generate diagram), that process is **not** this app. Something else is bound to port 8000 (usually `archdiag.api:app`). Stop it, then start the reviewer:
+
+```bash
+# macOS/Linux: see what owns 8000
+lsof -i :8000
+kill <PID>
+
+curl -s http://127.0.0.1:8000/health
+# must include: "app": "cv-competency-reviewer"
+```
+
+You must run `python -m uvicorn cv_reviewer.api:app --port 8000` from **cv-competency-reviewer**, not from an architecture-diagram folder. Then hard-refresh the browser (Cmd+Shift+R / Ctrl+Shift+R).
+
 ---
 
 ## What has been done
