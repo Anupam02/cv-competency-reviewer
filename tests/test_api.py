@@ -32,6 +32,18 @@ def test_health() -> None:
     assert "llm_provider" in body
 
 
+def test_ui_exposes_sample_select_and_file_input() -> None:
+    res = client.get("/")
+    assert res.status_code == 200
+    html = res.text
+    assert 'id="cv-sample"' in html
+    assert 'id="pos-sample"' in html
+    assert 'id="cv-files"' in html
+    assert 'id="pos-files"' in html
+    assert 'for="cv-files"' in html
+    assert "This file is queued for Run." in html
+
+
 def test_samples_endpoint() -> None:
     res = client.get("/samples")
     assert res.status_code == 200

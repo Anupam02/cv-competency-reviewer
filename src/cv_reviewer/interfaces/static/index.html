@@ -120,7 +120,30 @@
       transition: border-color 0.15s, transform 0.15s;
     }
     .drop:hover { border-color: var(--accent); transform: translateY(-1px); }
-    .drop input { display: none; }
+    .drop.is-hot { border-color: var(--accent); background: #e4f6f0; }
+    .pick-row {
+      display: grid;
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .pick-row label.field {
+      display: grid;
+      gap: 4px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--accent-2);
+    }
+    select, input[type=file] {
+      width: 100%;
+      margin: 0;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper-solid);
+      font: inherit;
+      font-weight: 500;
+      color: var(--ink);
+    }
     textarea {
       width: 100%;
       min-height: 96px;
@@ -257,21 +280,37 @@
         <section class="panel">
           <div class="step">Step 1</div>
           <h2>CVs</h2>
-          <p class="muted">PDF, DOCX, TXT, or MD. You can also paste one CV below.</p>
-          <label class="drop" id="cv-drop"><span id="cv-drop-label">Choose CV files</span>
-            <input id="cv-files" type="file" accept=".pdf,.docx,.txt,.md" multiple />
-          </label>
-          <textarea id="cv-paste" placeholder="Paste a CV if you are not uploading files"></textarea>
+          <p class="muted">Pick a sample, or choose a PDF/DOCX/TXT from your computer. The chosen file is the one that gets assessed.</p>
+          <div class="pick-row">
+            <label class="field">Sample CV
+              <select id="cv-sample">
+                <option value="">Choose a sample CV…</option>
+              </select>
+            </label>
+            <label class="field">File from this computer
+              <input id="cv-files" type="file" accept=".pdf,.docx,.txt,.md,application/pdf,text/plain" multiple />
+            </label>
+          </div>
+          <label class="drop" id="cv-drop" for="cv-files" tabindex="0">Drop a CV here, or click to choose a file</label>
+          <textarea id="cv-paste" placeholder="Or paste a CV as text"></textarea>
           <div id="cv-list" class="chip-row muted"></div>
         </section>
         <section class="panel">
           <div class="step">Step 2</div>
           <h2>Position descriptions</h2>
-          <p class="muted">Optional. Includes the BMC Project Architect JD when you load samples.</p>
-          <label class="drop" id="pos-drop"><span id="pos-drop-label">Choose position files</span>
-            <input id="pos-files" type="file" accept=".pdf,.docx,.txt,.md" multiple />
-          </label>
-          <textarea id="pos-paste" placeholder="Paste a position description"></textarea>
+          <p class="muted">Optional. Select a sample JD, or choose a file. Selection replaces whatever was loaded before.</p>
+          <div class="pick-row">
+            <label class="field">Sample position
+              <select id="pos-sample">
+                <option value="">Choose a sample position…</option>
+              </select>
+            </label>
+            <label class="field">File from this computer
+              <input id="pos-files" type="file" accept=".pdf,.docx,.txt,.md,application/pdf,text/plain" multiple />
+            </label>
+          </div>
+          <label class="drop" id="pos-drop" for="pos-files" tabindex="0">Drop a position file here, or click to choose</label>
+          <textarea id="pos-paste" placeholder="Or paste a position description"></textarea>
           <div id="pos-list" class="chip-row muted"></div>
         </section>
       </div>
@@ -290,13 +329,14 @@
           <button id="demo" class="secondary" type="button">Load sample CVs and positions</button>
           <button id="run" type="button">Run assessment</button>
         </div>
-        <p class="muted" style="margin: 12px 0 0;">Samples include three fictional CVs, three fictional roles, and the public BMC Project Architect JD. If you pick a resume in the CV files control, that file is assessed instead of the fictional CVs.</p>
+        <p class="muted" style="margin: 12px 0 0;">The lists under CVs and Positions are what Run uses. After you pick a sample or a local file, that name should appear there before you run.</p>
       </section>
       <div id="out"></div>
     </main>
   </div>
   <script>
     const state = { cvs: [], positions: [] };
+    const library = { cvs: [], positions: [] };
     const out = document.getElementById("out");
 
     fetch("/health").then(r => r.json()).then((info) => {
@@ -323,108 +363,245 @@
       return `<span class="badge ${escapeHtml(cls)}">${escapeHtml(label)}</span>`;
     }
 
+    function isBinaryName(name) {
+      return /\.(pdf|docx)$/i.test(name || "");
+    }
+
     function snippet(text) {
       return String(text || "").split("\n").map(s => s.trim()).filter(Boolean).slice(0, 3).join(" · ").slice(0, 200);
+    }
+
+    function readAsText(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(reader.error || new Error("Could not read " + file.name));
+        reader.readAsText(file);
+      });
     }
 
     function renderLists() {
       const cvEl = document.getElementById("cv-list");
       const posEl = document.getElementById("pos-list");
+      const card = (d, key, idx) => {
+        const origin = d.file ? "from your computer" : "from samples";
+        const meta = d.file
+          ? `${Math.max(1, Math.round((d.bytes || d.file.size || 0) / 1024))} KB · ${d.binary ? "will upload as a file" : "text loaded"} · ${origin}`
+          : origin;
+        const preview = d.binary ? "Binary document selected. It will be parsed on Run." : (snippet(d.text) || "(no preview)");
+        return `<div class="card" style="margin:8px 0" data-key="${key}" data-idx="${idx}">
+          <strong>${escapeHtml(d.filename)}</strong>
+          <p class="muted">${escapeHtml(meta)}</p>
+          <p class="muted">${escapeHtml(preview)}</p>
+          <p class="muted">This file is queued for Run.</p>
+        </div>`;
+      };
       cvEl.innerHTML = state.cvs.length
-        ? state.cvs.map(d => `<div class="card" style="margin:8px 0"><strong>${escapeHtml(d.filename)}</strong><p class="muted">${escapeHtml(snippet(d.text)) || "(empty file)"}</p></div>`).join("")
-        : "<span class='muted'>No CVs loaded yet. Load samples or choose files.</span>";
+        ? state.cvs.map((d, i) => card(d, "cvs", i)).join("")
+        : "<span class='muted'>Nothing selected yet. Use the sample list or Choose file.</span>";
       posEl.innerHTML = state.positions.length
-        ? state.positions.map(d => `<div class="card" style="margin:8px 0"><strong>${escapeHtml(d.filename)}</strong><p class="muted">${escapeHtml(snippet(d.text)) || "(empty file)"}</p></div>`).join("")
-        : "<span class='muted'>No positions loaded yet. Load samples or choose files.</span>";
-      document.getElementById("cv-drop-label").textContent = state.cvs.length
-        ? `${state.cvs.length} CV(s) ready — click to replace with your own files`
-        : "Choose CV files";
-      document.getElementById("pos-drop-label").textContent = state.positions.length
-        ? `${state.positions.length} position(s) ready — click to replace`
-        : "Choose position files";
+        ? state.positions.map((d, i) => card(d, "positions", i)).join("")
+        : "<span class='muted'>No position selected. Optional — pick a sample JD or a file.</span>";
+    }
+
+    function setSelectValue(selectId, filename) {
+      const el = document.getElementById(selectId);
+      if (!el) return;
+      const match = [...el.options].some((opt) => opt.value === filename);
+      el.value = match ? filename : "";
+    }
+
+    function applyDocs(key, docs, status) {
+      state[key] = docs;
+      if (key === "cvs") setSelectValue("cv-sample", docs.length === 1 && !docs[0].file ? docs[0].filename : "");
+      if (key === "positions") setSelectValue("pos-sample", docs.length === 1 && !docs[0].file ? docs[0].filename : "");
+      renderLists();
+      if (status) out.innerHTML = `<p class="status muted">${status}</p>`;
     }
 
     async function filesToDocs(fileList) {
       const docs = [];
       for (const file of fileList) {
-        docs.push({ filename: file.name, text: await file.text() });
+        const binary = isBinaryName(file.name);
+        docs.push({
+          filename: file.name,
+          text: binary ? "" : await readAsText(file),
+          file,
+          binary,
+          bytes: file.size,
+        });
       }
       return docs;
     }
 
-    document.getElementById("cv-files").addEventListener("change", async (ev) => {
-      state.cvs = await filesToDocs(ev.target.files);
-      renderLists();
-    });
-    document.getElementById("pos-files").addEventListener("change", async (ev) => {
-      state.positions = await filesToDocs(ev.target.files);
-      renderLists();
+    function fillSampleSelect(selectId, docs, placeholder, allValue) {
+      const el = document.getElementById(selectId);
+      const current = el.value;
+      el.innerHTML = "";
+      const blank = document.createElement("option");
+      blank.value = "";
+      blank.textContent = placeholder;
+      el.appendChild(blank);
+      if (docs.length > 1) {
+        const all = document.createElement("option");
+        all.value = allValue;
+        all.textContent = `All samples (${docs.length})`;
+        el.appendChild(all);
+      }
+      docs.forEach((d) => {
+        const opt = document.createElement("option");
+        opt.value = d.filename;
+        opt.textContent = `${d.label || d.filename} — ${d.filename}`;
+        el.appendChild(opt);
+      });
+      if ([...el.options].some((opt) => opt.value === current)) el.value = current;
+    }
+
+    function selectSample(kind, value) {
+      const docs = kind === "cvs" ? library.cvs : library.positions;
+      const input = document.getElementById(kind === "cvs" ? "cv-files" : "pos-files");
+      if (!value) {
+        applyDocs(kind, [], "");
+        return;
+      }
+      if (input) input.value = "";
+      if (value === "*all*") {
+        applyDocs(kind, docs.map((d) => ({ filename: d.filename, text: d.text })),
+          `Using all sample ${kind === "cvs" ? "CVs" : "positions"} (${docs.length}).`);
+        const el = document.getElementById(kind === "cvs" ? "cv-sample" : "pos-sample");
+        if (el) el.value = "*all*";
+        return;
+      }
+      const hit = docs.find((d) => d.filename === value);
+      if (!hit) {
+        out.innerHTML = `<p class="banner">That sample is not in the library: ${escapeHtml(value)}</p>`;
+        return;
+      }
+      applyDocs(kind, [{ filename: hit.filename, text: hit.text }],
+        `Selected ${escapeHtml(hit.filename)}. This is the file Run will use.`);
+    }
+
+    function wireFileTarget(dropId, inputId, key) {
+      const drop = document.getElementById(dropId);
+      const input = document.getElementById(inputId);
+      const take = async (fileList) => {
+        if (!fileList || !fileList.length) return;
+        try {
+          const docs = await filesToDocs(fileList);
+          applyDocs(
+            key,
+            docs,
+            `Using your file(s): ${docs.map((d) => escapeHtml(d.filename)).join(", ")}. This replaces the previous ${key === "cvs" ? "CV" : "position"} selection.`
+          );
+        } catch (err) {
+          out.innerHTML = `<p class="banner">${escapeHtml(err.message || err)}</p>`;
+        }
+      };
+      const onPick = async () => { await take(input.files); };
+      input.addEventListener("change", onPick);
+      input.addEventListener("input", onPick);
+      drop.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter" || ev.key === " ") {
+          ev.preventDefault();
+          input.click();
+        }
+      });
+      drop.addEventListener("dragover", (ev) => {
+        ev.preventDefault();
+        drop.classList.add("is-hot");
+      });
+      drop.addEventListener("dragleave", () => drop.classList.remove("is-hot"));
+      drop.addEventListener("drop", async (ev) => {
+        ev.preventDefault();
+        drop.classList.remove("is-hot");
+        const incoming = ev.dataTransfer && ev.dataTransfer.files;
+        if (!incoming || !incoming.length) return;
+        try {
+          const dt = new DataTransfer();
+          [...incoming].forEach((f) => dt.items.add(f));
+          input.files = dt.files;
+        } catch (_err) {
+          /* DataTransfer assignment is best-effort; state still takes the dropped files. */
+        }
+        await take(incoming);
+      });
+    }
+
+    function toRunFile(doc) {
+      if (doc.file) return doc.file;
+      return new File([doc.text || ""], doc.filename || "document.txt", { type: "text/plain" });
+    }
+
+    function collectDocs(key, pasteId, pasteName) {
+      const docs = [...state[key]];
+      const paste = document.getElementById(pasteId).value.trim();
+      if (paste) docs.push({ filename: pasteName, text: paste });
+      return docs;
+    }
+
+    async function loadLibrary() {
+      const res = await fetch("/samples");
+      if (!res.ok) throw new Error("Could not load samples (" + res.status + ").");
+      const data = await res.json();
+      library.cvs = data.cvs || [];
+      library.positions = data.positions || [];
+      fillSampleSelect("cv-sample", library.cvs, "Choose a sample CV…", "*all*");
+      fillSampleSelect("pos-sample", library.positions, "Choose a sample position…", "*all*");
+      return data;
+    }
+
+    wireFileTarget("cv-drop", "cv-files", "cvs");
+    wireFileTarget("pos-drop", "pos-files", "positions");
+    document.getElementById("cv-sample").addEventListener("change", (ev) => selectSample("cvs", ev.target.value));
+    document.getElementById("pos-sample").addEventListener("change", (ev) => selectSample("positions", ev.target.value));
+
+    loadLibrary().catch((err) => {
+      out.innerHTML = `<p class="banner">${escapeHtml(err.message)}</p>`;
     });
 
     document.getElementById("demo").onclick = async () => {
       out.innerHTML = "<p class='status muted'>Loading samples from sample_cvs and sample_positions…</p>";
-      const res = await fetch("/samples");
-      if (!res.ok) {
-        out.innerHTML = `<p class="banner">Could not load samples (${res.status}).</p>`;
-        return;
+      try {
+        const data = await loadLibrary();
+        document.getElementById("cv-files").value = "";
+        document.getElementById("pos-files").value = "";
+        document.getElementById("cv-paste").value = "";
+        document.getElementById("pos-paste").value = "";
+        if (!library.cvs.length) {
+          out.innerHTML = `<p class="banner">No sample CVs found. Looked in ${escapeHtml(data.cv_source || "(unknown)")}.</p>`;
+          return;
+        }
+        selectSample("cvs", "*all*");
+        if (library.positions.length) selectSample("positions", "*all*");
+        out.innerHTML = `<p class="status muted">Loaded from disk:<br/>CVs: ${escapeHtml(data.cv_source || "")}<br/>Positions: ${escapeHtml(data.position_source || "")}<br/>Use the sample dropdowns if you want one file instead of all. The file picker stays empty for samples (the browser cannot attach server paths).</p>`;
+      } catch (err) {
+        out.innerHTML = `<p class="banner">${escapeHtml(err.message)}</p>`;
       }
-      const data = await res.json();
-      state.cvs = (data.cvs || []).map(d => ({ filename: d.filename, text: d.text }));
-      state.positions = (data.positions || []).map(d => ({ filename: d.filename, text: d.text }));
-      document.getElementById("cv-files").value = "";
-      document.getElementById("pos-files").value = "";
-      document.getElementById("cv-paste").value = "";
-      document.getElementById("pos-paste").value = "";
-      renderLists();
-      if (!state.cvs.length) {
-        out.innerHTML = `<p class="banner">No sample CVs found. Looked in ${escapeHtml(data.cv_source || "(unknown)")}.</p>`;
-        return;
-      }
-      out.innerHTML = `<p class="status muted">Loaded from disk:<br/>CVs: ${escapeHtml(data.cv_source || "")}<br/>Positions: ${escapeHtml(data.position_source || "")}<br/>${state.cvs.map(d => escapeHtml(d.filename)).join(", ")} · ${state.positions.map(d => escapeHtml(d.filename)).join(", ")}. Click Run — the file picker stays empty on purpose (the browser cannot select server files).</p>`;
     };
 
     document.getElementById("run").onclick = async () => {
-      const cvFiles = [...document.getElementById("cv-files").files];
-      const posFiles = [...document.getElementById("pos-files").files];
-      const cvPaste = document.getElementById("cv-paste").value.trim();
-      const posPaste = document.getElementById("pos-paste").value.trim();
-      const binary = (f) => /\.(pdf|docx)$/i.test(f.name);
-      const hasBinary = cvFiles.some(binary) || posFiles.some(binary);
-
+      const cvs = collectDocs("cvs", "cv-paste", "pasted-cv.txt");
+      const positions = collectDocs("positions", "pos-paste", "pasted-position.txt");
       out.innerHTML = "<p class='status muted'>Running retrieval and assessments…</p>";
       try {
+        if (!cvs.length) throw new Error("Select a sample CV or choose a file from your computer first.");
         let data;
-        if (hasBinary) {
+        const needsUpload = [...cvs, ...positions].some((d) => d.file);
+        if (needsUpload) {
           const form = new FormData();
-          (cvFiles.length ? cvFiles : []).forEach(f => form.append("cvs", f));
-          posFiles.forEach(f => form.append("positions", f));
+          cvs.forEach((d) => form.append("cvs", toRunFile(d)));
+          positions.forEach((d) => form.append("positions", toRunFile(d)));
           form.append("use_llm", document.getElementById("llm").checked ? "true" : "false");
-          if (!cvFiles.length) throw new Error("PDF/DOCX CVs must be uploaded with the file picker.");
           const res = await fetch("/run-files", { method: "POST", body: form });
           if (!res.ok) throw new Error(await res.text());
           data = await res.json();
         } else {
-          const cvs = [];
-          const positions = [];
-          if (cvFiles.length) {
-            for (const file of cvFiles) cvs.push({ filename: file.name, text: await file.text() });
-          } else {
-            cvs.push(...state.cvs);
-          }
-          if (posFiles.length) {
-            for (const file of posFiles) positions.push({ filename: file.name, text: await file.text() });
-          } else {
-            positions.push(...state.positions);
-          }
-          if (cvPaste) cvs.push({ filename: "pasted-cv.txt", text: cvPaste });
-          if (posPaste) positions.push({ filename: "pasted-position.txt", text: posPaste });
-          if (!cvs.length) throw new Error("Provide at least one CV.");
           const res = await fetch("/run", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              cvs,
-              positions,
+              cvs: cvs.map((d) => ({ filename: d.filename, text: d.text })),
+              positions: positions.map((d) => ({ filename: d.filename, text: d.text })),
               use_llm: document.getElementById("llm").checked ? true : false
             })
           });
