@@ -9,8 +9,8 @@ from cv_reviewer.application.ports import LlmRefinerPort, VectorIndexFactory, re
 from cv_reviewer.domain.assessment import heuristic_review
 from cv_reviewer.domain.chunking import chunk_cv
 from cv_reviewer.domain.evidence_policy import find_additional_technologies
-from cv_reviewer.domain.guardrails import strip_decision_language
-from cv_reviewer.domain.models import PipelineTrace, RetrievalEvent, TraceStep, CompetencyReview
+from cv_reviewer.domain.guardrails import enforce_quote_grounding, strip_decision_language
+from cv_reviewer.domain.models import CompetencyReview, PipelineTrace, RetrievalEvent, TraceStep
 from cv_reviewer.domain.taxonomy import REQUIRED_AREAS
 
 logger = logging.getLogger("cv_reviewer.trace")
@@ -121,11 +121,12 @@ class ReviewCvService:
 
         t4 = time.perf_counter()
         review = strip_decision_language(review)
+        review = enforce_quote_grounding(review, text)
         steps.append(
             TraceStep(
                 name="guardrail",
                 duration_ms=_ms(t4),
-                detail="redact employment-decision wording",
+                detail="redact employment-decision wording and drop ungrounded quotes",
             )
         )
 

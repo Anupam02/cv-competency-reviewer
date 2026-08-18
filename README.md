@@ -8,6 +8,55 @@ The system inventories evidence. It does **not** make a hiring, pass/fail, inter
 
 ---
 
+## Quick start (Use Case 1 only)
+
+Python 3.11+. From this repo (not the architecture-diagram app):
+
+```bash
+git fetch origin
+git checkout cursor/uc1-traceability-16a6
+git pull origin cursor/uc1-traceability-16a6
+
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+
+python -m pip install --upgrade "pip>=24.2"
+python -m pip install -r requirements.txt
+```
+
+That install already includes FastAPI, uvicorn, PDF/DOCX ingest, numpy, the OpenAI-compatible client (used for **local Ollama**), and pytest. You do **not** need Datadog or an extra tracing package.
+
+Optional: local LLM (separate install, not pip):
+
+```bash
+# other terminal
+ollama serve
+ollama pull llama3.2
+```
+
+Copy `.env.example` to `.env` if your model tag is not `llama3.2`.
+
+Run tests, then the UI:
+
+```bash
+python -m pytest
+python -m uvicorn cv_reviewer.api:app --port 8000
+```
+
+Open http://127.0.0.1:8000 → **Load sample CVs and positions** → upload your resume if you want → **Run assessment** → open **Trace**.
+
+CLI:
+
+```bash
+python -m cv_reviewer --pretty --no-llm \
+  --cvs sample_cvs/strong_ai_engineer.txt \
+  --positions sample_positions/bmc_project_architect_consulting_india.txt
+```
+
+Omit `--no-llm` when `ollama serve` is running.
+
+---
+
 ## What has been done
 
 ### Use Case 1 requirements
@@ -243,31 +292,19 @@ CV / position files
 
 ---
 
-## Traceability (not Datadog)
+## Traceability, Ollama, guardrails, and evaluation
 
-There is **no Datadog agent** in this project. Datadog is a commercial SaaS APM. You do not need it for the exercise.
+There is **no Datadog agent**. Datadog is commercial SaaS. Every review has an in-app **Trace** tab: chunk → retrieve → classify → optional LLM → guardrail (decision-language strip + quote grounding).
 
-What you **do** have now is an **in-app pipeline trace** on every review (UI tab **Trace**):
+Ollama is **optional**. Default `LLM_PROVIDER=ollama` talks to `ollama serve` on this machine. The heuristic review always runs first. If Ollama is down, refinement is skipped.
 
-| Step | What it records |
-| --- | --- |
-| `chunk` | How many CV chunks were produced |
-| `retrieve` | Passages pulled per competency area, with score and a quote preview |
-| `classify` | Heuristic demonstrated / mentioned / ambiguous |
-| `llm_refine` | Ollama/OpenAI used, or skipped (and why) |
-| `guardrail` | Hire/reject language stripped |
+```bash
+python -m cv_reviewer.evaluation
+```
 
-That is the same *idea* as Datadog APM (a request timeline you can inspect), implemented in-process so a demo does not need a collector.
+Gold labels: `src/cv_reviewer/evaluation/matrix.py`. Do not gold-label a hiring outcome.
 
-Open-source options if you later want a real APM product:
-
-| Need | Open-source choice | Notes |
-| --- | --- | --- |
-| General APM (Datadog alternative) | **OpenTelemetry** → **Jaeger** or **Grafana Tempo** | Industry standard; you export spans, you do not embed Datadog |
-| LLM/RAG traces (LangSmith alternative) | **Langfuse** or **Arize Phoenix** | Self-host; good for prompt/retrieval spans |
-| Metrics/logs UI | **Grafana** + **Prometheus** / **Loki** | Complementary to traces |
-
-Do not add Datadog for this demo. The in-app trace plus stdout logs (`cv_reviewer.trace`) are enough to show “every retrieval is inspectable.”
+If you later want vendor-style APM: OpenTelemetry → Jaeger/Grafana Tempo. For LLM spans: Langfuse or Arize Phoenix.
 
 
 ---
@@ -282,7 +319,7 @@ Do not add Datadog for this demo. The in-app trace plus stdout logs (`cv_reviewe
 ## If this were production
 
 - Persistent vector store, auth, and audit logs
-- A labelled mention-vs-demonstration evaluation set
+- A larger labelled mention-vs-demonstration set than the three fictional samples
 - Human review before any HR use
 - Better PDF layout extraction; optional OpenTelemetry export of the in-app traces
 
