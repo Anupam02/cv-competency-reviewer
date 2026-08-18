@@ -1,0 +1,10 @@
+Position: Applied ML Research Scientist
+Team: Research
+Location: Fictional City
+
+Requirements
+- Train and evaluate deep learning models in PyTorch
+- Publish or internally document experimental results
+- Work with labelled datasets, metrics, and ablation studies
+- Fine-tune language models with LoRA or similar adapters
+- Communicate research trade-offs to engineering partners

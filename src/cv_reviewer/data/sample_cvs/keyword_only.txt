@@ -1,0 +1,17 @@
+Jordan Lee
+Manchester, UK
+
+Profile
+Software developer interested in AI. Familiar with ChatGPT.
+
+Skills
+Python, LLMs, embeddings, vector databases, RAG, machine learning, deep learning, LangChain, OpenAI, architecture
+
+Experience
+Backend Developer, RetailCo (2021–2025)
+- Developed REST APIs in Java for inventory management.
+- Wrote SQL reports and maintained a checkout service.
+- Used Excel for weekly operations dashboards.
+
+Education
+BSc Information Systems

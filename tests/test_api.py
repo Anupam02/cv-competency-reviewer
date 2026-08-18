@@ -38,6 +38,9 @@ def test_samples_endpoint() -> None:
     body = res.json()
     assert len(body["cvs"]) >= 3
     assert len(body["positions"]) >= 4
+    assert body["cvs"][0]["filename"].endswith(".txt")
+    assert "Alex" in body["cvs"][0]["text"] or "Jordan" in "".join(c["text"] for c in body["cvs"]) or "Sam" in "".join(c["text"] for c in body["cvs"])
+    assert body["cv_source"]
 
 
 def test_review_text_endpoint() -> None:

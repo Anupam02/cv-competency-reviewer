@@ -258,7 +258,7 @@
           <div class="step">Step 1</div>
           <h2>CVs</h2>
           <p class="muted">PDF, DOCX, TXT, or MD. You can also paste one CV below.</p>
-          <label class="drop">Choose CV files
+          <label class="drop" id="cv-drop"><span id="cv-drop-label">Choose CV files</span>
             <input id="cv-files" type="file" accept=".pdf,.docx,.txt,.md" multiple />
           </label>
           <textarea id="cv-paste" placeholder="Paste a CV if you are not uploading files"></textarea>
@@ -268,7 +268,7 @@
           <div class="step">Step 2</div>
           <h2>Position descriptions</h2>
           <p class="muted">Optional. Includes the BMC Project Architect JD when you load samples.</p>
-          <label class="drop">Choose position files
+          <label class="drop" id="pos-drop"><span id="pos-drop-label">Choose position files</span>
             <input id="pos-files" type="file" accept=".pdf,.docx,.txt,.md" multiple />
           </label>
           <textarea id="pos-paste" placeholder="Paste a position description"></textarea>
@@ -323,9 +323,25 @@
       return `<span class="badge ${escapeHtml(cls)}">${escapeHtml(label)}</span>`;
     }
 
+    function snippet(text) {
+      return String(text || "").split("\n").map(s => s.trim()).filter(Boolean).slice(0, 3).join(" · ").slice(0, 200);
+    }
+
     function renderLists() {
-      document.getElementById("cv-list").innerHTML = state.cvs.map(d => `<span class="chip">${escapeHtml(d.filename)}</span>`).join("") || "No CVs loaded yet.";
-      document.getElementById("pos-list").innerHTML = state.positions.map(d => `<span class="chip">${escapeHtml(d.filename)}</span>`).join("") || "No positions loaded yet.";
+      const cvEl = document.getElementById("cv-list");
+      const posEl = document.getElementById("pos-list");
+      cvEl.innerHTML = state.cvs.length
+        ? state.cvs.map(d => `<div class="card" style="margin:8px 0"><strong>${escapeHtml(d.filename)}</strong><p class="muted">${escapeHtml(snippet(d.text)) || "(empty file)"}</p></div>`).join("")
+        : "<span class='muted'>No CVs loaded yet. Load samples or choose files.</span>";
+      posEl.innerHTML = state.positions.length
+        ? state.positions.map(d => `<div class="card" style="margin:8px 0"><strong>${escapeHtml(d.filename)}</strong><p class="muted">${escapeHtml(snippet(d.text)) || "(empty file)"}</p></div>`).join("")
+        : "<span class='muted'>No positions loaded yet. Load samples or choose files.</span>";
+      document.getElementById("cv-drop-label").textContent = state.cvs.length
+        ? `${state.cvs.length} CV(s) ready — click to replace with your own files`
+        : "Choose CV files";
+      document.getElementById("pos-drop-label").textContent = state.positions.length
+        ? `${state.positions.length} position(s) ready — click to replace`
+        : "Choose position files";
     }
 
     async function filesToDocs(fileList) {
@@ -346,15 +362,25 @@
     });
 
     document.getElementById("demo").onclick = async () => {
-      out.innerHTML = "<p class='status muted'>Loading samples…</p>";
+      out.innerHTML = "<p class='status muted'>Loading samples from sample_cvs and sample_positions…</p>";
       const res = await fetch("/samples");
+      if (!res.ok) {
+        out.innerHTML = `<p class="banner">Could not load samples (${res.status}).</p>`;
+        return;
+      }
       const data = await res.json();
-      state.cvs = data.cvs.map(d => ({ filename: d.filename, text: d.text }));
-      state.positions = data.positions.map(d => ({ filename: d.filename, text: d.text }));
+      state.cvs = (data.cvs || []).map(d => ({ filename: d.filename, text: d.text }));
+      state.positions = (data.positions || []).map(d => ({ filename: d.filename, text: d.text }));
+      document.getElementById("cv-files").value = "";
+      document.getElementById("pos-files").value = "";
       document.getElementById("cv-paste").value = "";
       document.getElementById("pos-paste").value = "";
       renderLists();
-      out.innerHTML = `<p class="status muted">Loaded ${state.cvs.length} CV(s) and ${state.positions.length} position(s), including the BMC Project Architect JD. Upload your resume in the CV picker if it is not already listed, then click run.</p>`;
+      if (!state.cvs.length) {
+        out.innerHTML = `<p class="banner">No sample CVs found. Looked in ${escapeHtml(data.cv_source || "(unknown)")}.</p>`;
+        return;
+      }
+      out.innerHTML = `<p class="status muted">Loaded from disk:<br/>CVs: ${escapeHtml(data.cv_source || "")}<br/>Positions: ${escapeHtml(data.position_source || "")}<br/>${state.cvs.map(d => escapeHtml(d.filename)).join(", ")} · ${state.positions.map(d => escapeHtml(d.filename)).join(", ")}. Click Run — the file picker stays empty on purpose (the browser cannot select server files).</p>`;
     };
 
     document.getElementById("run").onclick = async () => {
