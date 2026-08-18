@@ -209,6 +209,15 @@
     }
     .switch input { margin-top: 4px; accent-color: var(--accent); width: 16px; height: 16px; }
     details { margin-top: 8px; }
+    .trace-records {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      max-height: 280px;
+      overflow: auto;
+    }
+    .trace-records li { margin: 3px 0; }
     summary { cursor: pointer; }
     .status {
       padding: 14px 16px;
@@ -523,27 +532,49 @@
       }
       return reviews.map(review => {
         const t = review.trace;
-        const steps = (t.steps || []).map(s => `
+        const steps = (t.steps || []).map(s => {
+          const lines = (s.records || []).map(line => `<li>${escapeHtml(line)}</li>`).join("");
+          const extra = lines
+            ? `<details open><summary>${(s.records || []).length} detail line(s)</summary><ul class="trace-records">${lines}</ul></details>`
+            : "";
+          return `
           <tr>
             <td><strong>${escapeHtml(s.name)}</strong></td>
             <td>${badge(s.status)}</td>
             <td>${s.duration_ms} ms</td>
-            <td class="muted">${escapeHtml(s.detail)}</td>
-          </tr>
-        `).join("");
-        const hits = (t.retrieval || []).slice(0, 24).map(h => `
-          <p class="quote"><strong>${escapeHtml(h.area)}</strong> · ${escapeHtml(h.section)} · score ${h.score}<br/>${escapeHtml(h.preview)}</p>
-        `).join("") || "<p class='muted'>No retrieved passages.</p>";
+            <td>
+              <div>${escapeHtml(s.detail)}</div>
+              ${extra}
+            </td>
+          </tr>`;
+        }).join("");
+        const byArea = {};
+        (t.retrieval || []).forEach(h => {
+          (byArea[h.area] = byArea[h.area] || []).push(h);
+        });
+        const hits = Object.keys(byArea).map(area => {
+          const rows = byArea[area].map(h =>
+            `<p class="quote">#${h.chunk_index} · ${escapeHtml(h.section)} · score ${h.score}<br/>${escapeHtml(h.preview)}</p>`
+          ).join("");
+          return `<details><summary><strong>${escapeHtml(area)}</strong> · ${byArea[area].length} retrieved chunk(s)</summary>${rows || "<p class='muted'>None.</p>"}</details>`;
+        }).join("") || "<p class='muted'>No retrieved excerpts.</p>";
+        const classes = (t.classifications || []).map(c => {
+          const counts = Object.entries(c.evidence_counts || {}).map(([k, v]) => `${k}=${v}`).join(", ") || "none";
+          const quotes = (c.quote_previews || []).map(q => `<p class="quote">${escapeHtml(q)}</p>`).join("");
+          return `<details><summary>${escapeHtml(c.area)} · ${badge(c.apparent_level)} · demonstrated=${c.demonstrated} · ${escapeHtml(counts)}</summary>${quotes || "<p class='muted'>No quotes stored on this area.</p>"}</details>`;
+        }).join("");
         return `
           <div class="card">
             <h2>${escapeHtml(review.candidate_name || t.filename || "CV")}</h2>
-            <p class="muted">run ${escapeHtml(t.run_id)} · ${t.chunk_count} chunks · embeddings ${escapeHtml(t.embedding_backend)} · LLM ${escapeHtml(t.llm_provider)}${t.llm_used ? " used" : " skipped"}</p>
+            <p class="muted">run ${escapeHtml(t.run_id)} · ${t.chunk_count} chunks · excerpt pack ${t.excerpt_chars || 0} chars · embeddings ${escapeHtml(t.embedding_backend)} · LLM ${escapeHtml(t.llm_provider)}${t.llm_used ? " used" : " skipped"} · ungrounded quotes removed ${t.quotes_dropped || 0}</p>
             ${t.llm_skipped_reason ? `<p class="muted">LLM skip: ${escapeHtml(t.llm_skipped_reason)}</p>` : ""}
             <table>
               <thead><tr><th>Step</th><th>Status</th><th>Time</th><th>Detail</th></tr></thead>
               <tbody>${steps}</tbody>
             </table>
-            <p class="muted" style="margin-top:12px">This is an in-app trace of chunk → retrieve → classify → optional LLM → guardrail. It is not Datadog; it is the same idea (a request timeline you can inspect). Retrieval previews:</p>
+            <h2 style="margin-top:18px">Classification by area</h2>
+            ${classes}
+            <h2 style="margin-top:18px">Retrieval by area</h2>
             ${hits}
           </div>
         `;

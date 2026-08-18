@@ -59,6 +59,25 @@ class TraceStep(BaseModel):
     duration_ms: float
     status: str = "ok"
     detail: str = ""
+    records: list[str] = Field(
+        default_factory=list,
+        description="Fine-grained lines under this step (chunk text, scores, labels).",
+    )
+
+
+class ChunkTrace(BaseModel):
+    index: int
+    section: str
+    chars: int
+    preview: str
+
+
+class ClassificationEvent(BaseModel):
+    area: str
+    apparent_level: str
+    demonstrated: bool
+    evidence_counts: dict[str, int] = Field(default_factory=dict)
+    quote_previews: list[str] = Field(default_factory=list)
 
 
 class RetrievalEvent(BaseModel):
@@ -79,8 +98,12 @@ class PipelineTrace(BaseModel):
     llm_used: bool = False
     llm_skipped_reason: str | None = None
     chunk_count: int = 0
+    excerpt_chars: int = 0
+    quotes_dropped: int = 0
     steps: list[TraceStep] = Field(default_factory=list)
+    chunks: list[ChunkTrace] = Field(default_factory=list)
     retrieval: list[RetrievalEvent] = Field(default_factory=list)
+    classifications: list[ClassificationEvent] = Field(default_factory=list)
 
 
 class CompetencyReview(BaseModel):

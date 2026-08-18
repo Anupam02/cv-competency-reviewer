@@ -56,3 +56,12 @@ def test_review_includes_pipeline_trace() -> None:
     assert names == ["chunk", "retrieve", "classify", "llm_refine", "guardrail"]
     assert review.trace.llm_used is False
     assert any(event.area == "Python" for event in review.trace.retrieval)
+    chunk_step = next(step for step in review.trace.steps if step.name == "chunk")
+    assert len(chunk_step.records) >= review.trace.chunk_count
+    assert review.trace.chunks
+    assert any(item.section == "experience" for item in review.trace.chunks)
+    classify_step = next(step for step in review.trace.steps if step.name == "classify")
+    assert any("Python" in line for line in classify_step.records)
+    assert len(review.trace.classifications) == 9
+    python = next(c for c in review.trace.classifications if c.area == "Python")
+    assert python.demonstrated is True
