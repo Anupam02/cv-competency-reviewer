@@ -413,17 +413,19 @@
             <button type="button" data-tab="table" class="active">Evidence table</button>
             <button type="button" data-tab="recs">Recommendations</button>
             <button type="button" data-tab="skills">Competency reviews</button>
+            <button type="button" data-tab="trace">Trace</button>
           </div>
           <div id="tab-table"></div>
           <div id="tab-recs" hidden></div>
           <div id="tab-skills" hidden></div>
+          <div id="tab-trace" hidden></div>
         </section>
       `;
       out.querySelectorAll(".tabs button").forEach(btn => {
         btn.onclick = () => {
           currentTab = btn.dataset.tab;
           out.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("active", b === btn));
-          ["table", "recs", "skills"].forEach(name => {
+          ["table", "recs", "skills", "trace"].forEach(name => {
             document.getElementById("tab-" + name).hidden = name !== currentTab;
           });
         };
@@ -431,6 +433,7 @@
       document.getElementById("tab-table").innerHTML = renderTable(data);
       document.getElementById("tab-recs").innerHTML = renderRecs(data);
       document.getElementById("tab-skills").innerHTML = renderSkills(data);
+      document.getElementById("tab-trace").innerHTML = renderTrace(data);
     }
 
     function renderTable(data) {
@@ -511,6 +514,40 @@
           <p><strong>Insufficient information:</strong> ${escapeHtml((review.insufficient_information || []).join(", ") || "None listed")}</p>
         </div>
       `).join("");
+    }
+
+    function renderTrace(data) {
+      const reviews = (data.competency_reviews || []).filter(r => r.trace);
+      if (!reviews.length) {
+        return "<p class='muted'>No pipeline trace on this run.</p>";
+      }
+      return reviews.map(review => {
+        const t = review.trace;
+        const steps = (t.steps || []).map(s => `
+          <tr>
+            <td><strong>${escapeHtml(s.name)}</strong></td>
+            <td>${badge(s.status)}</td>
+            <td>${s.duration_ms} ms</td>
+            <td class="muted">${escapeHtml(s.detail)}</td>
+          </tr>
+        `).join("");
+        const hits = (t.retrieval || []).slice(0, 24).map(h => `
+          <p class="quote"><strong>${escapeHtml(h.area)}</strong> · ${escapeHtml(h.section)} · score ${h.score}<br/>${escapeHtml(h.preview)}</p>
+        `).join("") || "<p class='muted'>No retrieved passages.</p>";
+        return `
+          <div class="card">
+            <h2>${escapeHtml(review.candidate_name || t.filename || "CV")}</h2>
+            <p class="muted">run ${escapeHtml(t.run_id)} · ${t.chunk_count} chunks · embeddings ${escapeHtml(t.embedding_backend)} · LLM ${escapeHtml(t.llm_provider)}${t.llm_used ? " used" : " skipped"}</p>
+            ${t.llm_skipped_reason ? `<p class="muted">LLM skip: ${escapeHtml(t.llm_skipped_reason)}</p>` : ""}
+            <table>
+              <thead><tr><th>Step</th><th>Status</th><th>Time</th><th>Detail</th></tr></thead>
+              <tbody>${steps}</tbody>
+            </table>
+            <p class="muted" style="margin-top:12px">This is an in-app trace of chunk → retrieve → classify → optional LLM → guardrail. It is not Datadog; it is the same idea (a request timeline you can inspect). Retrieval previews:</p>
+            ${hits}
+          </div>
+        `;
+      }).join("");
     }
 
     renderLists();

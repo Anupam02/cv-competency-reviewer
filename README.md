@@ -243,6 +243,35 @@ CV / position files
 
 ---
 
+## Traceability (not Datadog)
+
+There is **no Datadog agent** in this project. Datadog is a commercial SaaS APM. You do not need it for the exercise.
+
+What you **do** have now is an **in-app pipeline trace** on every review (UI tab **Trace**):
+
+| Step | What it records |
+| --- | --- |
+| `chunk` | How many CV chunks were produced |
+| `retrieve` | Passages pulled per competency area, with score and a quote preview |
+| `classify` | Heuristic demonstrated / mentioned / ambiguous |
+| `llm_refine` | Ollama/OpenAI used, or skipped (and why) |
+| `guardrail` | Hire/reject language stripped |
+
+That is the same *idea* as Datadog APM (a request timeline you can inspect), implemented in-process so a demo does not need a collector.
+
+Open-source options if you later want a real APM product:
+
+| Need | Open-source choice | Notes |
+| --- | --- | --- |
+| General APM (Datadog alternative) | **OpenTelemetry** → **Jaeger** or **Grafana Tempo** | Industry standard; you export spans, you do not embed Datadog |
+| LLM/RAG traces (LangSmith alternative) | **Langfuse** or **Arize Phoenix** | Self-host; good for prompt/retrieval spans |
+| Metrics/logs UI | **Grafana** + **Prometheus** / **Loki** | Complementary to traces |
+
+Do not add Datadog for this demo. The in-app trace plus stdout logs (`cv_reviewer.trace`) are enough to show “every retrieval is inspectable.”
+
+
+---
+
 ## Limitations
 
 - A CV is not verified employment history. Missing text is not proof of missing skill.
@@ -255,12 +284,13 @@ CV / position files
 - Persistent vector store, auth, and audit logs
 - A labelled mention-vs-demonstration evaluation set
 - Human review before any HR use
-- Better PDF layout extraction and tracing of every retrieval
+- Better PDF layout extraction; optional OpenTelemetry export of the in-app traces
 
 ## Presentation demo script
 
 1. `python -m pytest`
 2. Start `ollama serve` and the UI, load samples, run with the Ollama checkbox on.
 3. Open Alex Rivera × AI Platform Engineer and show a **demonstrated** quote.
-4. Open Jordan Lee’s competency review and show AI skills as **mentioned only**.
-5. State clearly: the app finds evidence; it does not decide hiring.
+4. Open the **Trace** tab and walk the chunk → retrieve → classify steps.
+5. Open Jordan Lee’s competency review and show AI skills as **mentioned only**.
+6. State clearly: the app finds evidence; it does not decide hiring.

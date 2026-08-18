@@ -54,6 +54,35 @@ class AdditionalTechnology(BaseModel):
     assessment_notes: str
 
 
+class TraceStep(BaseModel):
+    name: str
+    duration_ms: float
+    status: str = "ok"
+    detail: str = ""
+
+
+class RetrievalEvent(BaseModel):
+    area: str
+    chunk_index: int
+    section: str
+    score: float
+    preview: str
+
+
+class PipelineTrace(BaseModel):
+    """Per-review pipeline trace. Local, open-source style observability — not Datadog."""
+
+    run_id: str
+    filename: str | None = None
+    embedding_backend: str = "hashed"
+    llm_provider: str = "none"
+    llm_used: bool = False
+    llm_skipped_reason: str | None = None
+    chunk_count: int = 0
+    steps: list[TraceStep] = Field(default_factory=list)
+    retrieval: list[RetrievalEvent] = Field(default_factory=list)
+
+
 class CompetencyReview(BaseModel):
     candidate_name: str | None = None
     source_filename: str | None = None
@@ -65,6 +94,7 @@ class CompetencyReview(BaseModel):
     disclaimer: str = DISCLAIMER
     retrieval_used: bool = True
     llm_used: bool = False
+    trace: PipelineTrace | None = None
 
     def assert_no_decision_language(self) -> None:
         banned = (

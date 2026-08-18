@@ -46,3 +46,13 @@ def test_review_does_not_make_employment_decisions() -> None:
     blob = str(payload).lower()
     for term in ("hire", "reject", "interview", "pass/fail", "offer"):
         assert term not in blob
+
+
+def test_review_includes_pipeline_trace() -> None:
+    review = review_cv_file(SAMPLES / "strong_ai_engineer.txt", use_llm=False)
+    assert review.trace is not None
+    assert review.trace.chunk_count >= 3
+    names = [step.name for step in review.trace.steps]
+    assert names == ["chunk", "retrieve", "classify", "llm_refine", "guardrail"]
+    assert review.trace.llm_used is False
+    assert any(event.area == "Python" for event in review.trace.retrieval)
