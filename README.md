@@ -1,16 +1,12 @@
-# AI Technical Competency Review (Use Case 1)
+# AI Technical Competency Review
 
-This repository implements **Use Case 1 only** from the AI Engineer Technical Exercise: review a candidate CV for **demonstrated AI technical competence**.
-
-**Use Case 2** (architecture diagram generation from technical notes) is out of scope here and will live in a separate repository.
-
-The system inventories evidence. It does **not** make a hiring, pass/fail, interview, ranking-for-employment, or offer decision.
+This repository reviews a candidate CV for **demonstrated AI technical competence**. It inventories evidence. It does **not** make a hiring, pass/fail, interview, ranking-for-employment, or offer decision.
 
 ---
 
-## Quick start (Use Case 1 only)
+## Quick start
 
-Python 3.11+. From this repo (not the architecture-diagram app):
+Python 3.11+. This repo is the CV competency reviewer only.
 
 ```bash
 git fetch origin
